@@ -1,13 +1,13 @@
 "use client";
 import Link from "next/link";
-import { Heart, LayoutDashboard, Search, ShoppingBag, User } from "lucide-react";
+import { Heart, Search, ShoppingBag } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/client";
 import { useCart, useWishlist } from "@/lib/store";
 import { openCart } from "@/components/commerce/CartDrawer";
 import { SearchOverlay } from "./SearchOverlay";
 
-export function HeaderActions({ signedIn, staff }: { signedIn: boolean; staff: boolean }) {
+export function HeaderActions() {
   const { t } = useI18n();
   const lines = useCart();
   const saved = useWishlist();
@@ -37,15 +37,6 @@ export function HeaderActions({ signedIn, staff }: { signedIn: boolean; staff: b
         <Search className="size-5" />
       </button>
 
-
-      {staff && (
-        <Link href="/admin" className={`${iconBtn} hidden sm:grid`} aria-label={t.nav.admin} title={t.nav.admin}>
-          <LayoutDashboard className="size-5" />
-        </Link>
-      )}
-      <Link href={signedIn ? "/account" : "/login"} className={`${iconBtn} hidden sm:grid`} aria-label={signedIn ? t.nav.account : t.nav.login} title={signedIn ? t.nav.account : t.nav.login}>
-        <User className="size-5" />
-      </Link>
       <Link href="/wishlist" className={`${iconBtn} hidden sm:grid`} aria-label={t.nav.wishlist} title={t.nav.wishlist}>
         <Heart className="size-5" />
         {saved.length > 0 && <span className="absolute end-1.5 top-1.5 size-2 rounded-full bg-teal" />}

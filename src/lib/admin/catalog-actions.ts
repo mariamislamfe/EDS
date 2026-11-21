@@ -3,7 +3,7 @@ import sanitizeHtml from "sanitize-html";
 import { z } from "zod";
 import { requireAdmin, requireStaff } from "./auth";
 import { refreshStorefront, type ActionResult } from "./actions";
-import { dbErrorMessage, one, q, tx } from "@/lib/db";
+import { dbErrorMessage, q, tx } from "@/lib/db";
 import { putObject } from "@/lib/storage";
 import { insertRow, updateRow } from "./sql";
 
@@ -370,11 +370,11 @@ export async function deleteYear(id: string): Promise<ActionResult> {
 const STATUSES = ["pending", "confirmed", "processing", "shipped", "delivered", "cancelled", "refunded"] as const;
 
 export async function updateOrderStatus(orderId: string, status: string, note: string): Promise<ActionResult> {
-  const staff = await requireStaff();
+  await requireStaff();
   const p = z.object({ orderId: uuid, status: z.enum(STATUSES), note: z.string().max(500) }).safeParse({ orderId, status, note });
   if (!p.success) return { ok: false, error: "Invalid status" };
   try {
-    await q(`select public.set_order_status($1, $2::order_status, $3, $4)`, [p.data.orderId, p.data.status, p.data.note, staff.id]);
+    await q(`select public.set_order_status($1, $2::order_status, $3, $4)`, [p.data.orderId, p.data.status, p.data.note, null]);
     return { ok: true };
   } catch (e) {
     return fail(e);
@@ -405,17 +405,5 @@ export async function saveSetting(key: string, value: unknown): Promise<ActionRe
     return fail(e);
   }
   await refreshStorefront();
-  return { ok: true };
-}
-
-// ======================= team (admin only) =======================
-export async function setUserRole(email: string, role: string): Promise<ActionResult> {
-  const admin = await requireAdmin();
-  const p = z.object({ email: z.string().email(), role: z.enum(["customer", "staff", "admin"]) }).safeParse({ email, role });
-  if (!p.success) return { ok: false, error: "Enter a valid email and role" };
-  const target = await one<{ id: string }>(`select id from profiles where lower(email) = lower($1)`, [p.data.email.trim()]);
-  if (!target) return { ok: false, error: "No account with that email. Ask them to create an account and sign in once first." };
-  if (target.id === admin.id && p.data.role !== "admin") return { ok: false, error: "You can't remove your own admin access." };
-  await q(`update profiles set role = $2::user_role where id = $1`, [target.id, p.data.role]);
   return { ok: true };
 }

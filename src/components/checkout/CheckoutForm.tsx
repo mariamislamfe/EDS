@@ -14,14 +14,31 @@ import { cn } from "@/lib/utils";
 
 type Gov = { id: string; name_en: string; name_ar: string; shipping_fee: number | null };
 
-export function CheckoutForm({ governorates, paymentMethods, emailRequired, prefill }: {
+/** The customer's delivery details are remembered on this device only, to speed up the next order. */
+const DETAILS_KEY = "eds_checkout_details_v1";
+const DETAIL_FIELDS = ["name", "phone", "email", "governorate_id", "city", "address"] as const;
+
+export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
   governorates: Gov[]; paymentMethods: PaymentMethod[]; emailRequired: boolean;
-  prefill: { name: string; phone: string; email: string };
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const lines = useCart();
-  const [form, setForm] = useState({ ...prefill, governorate_id: "", city: "", address: "", notes: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", governorate_id: "", city: "", address: "", notes: "" });
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DETAILS_KEY) ?? "null") as Partial<Record<(typeof DETAIL_FIELDS)[number], string>> | null;
+      if (!saved) return;
+      const known = governorates.some((g) => g.id === saved.governorate_id);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time restore from localStorage after hydration
+      setForm((f) => {
+        const next = { ...f };
+        for (const k of DETAIL_FIELDS) if (typeof saved[k] === "string" && !f[k]) next[k] = saved[k]!;
+        if (!known) next.governorate_id = f.governorate_id;
+        return next;
+      });
+    } catch { /* ignore */ }
+  }, [governorates]);
   const [payment, setPayment] = useState(paymentMethods[0]?.id ?? "");
   const [couponInput, setCouponInput] = useState("");
   const [coupon, setCoupon] = useState<string | null>(null);
@@ -61,6 +78,7 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired, pref
       });
       if (res.ok) {
         trackPixel("Purchase", { value: quote?.total ?? 0, currency: "EGP", content_ids: lines.map((l) => l.id), content_type: "product", num_items: lines.reduce((n, l) => n + l.qty, 0) }, { eventID: res.number });
+        try { localStorage.setItem(DETAILS_KEY, JSON.stringify(Object.fromEntries(DETAIL_FIELDS.map((k) => [k, form[k]])))); } catch { /* ignore */ }
         cart.clear();
         router.push(`/order/${res.id}?token=${res.token}`);
       } else {

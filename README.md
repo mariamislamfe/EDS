@@ -2,7 +2,9 @@
 
 Bilingual (Arabic RTL / English) dental-supplies store with two shopping journeys — **Students** (organized by academic year, with kits) and **Dentists** (by specialty and category) — on **one product catalog**, plus a full admin dashboard.
 
-Stack: Next.js 16 (App Router, server components) · TypeScript · Tailwind CSS 4 · Motion · Neon (Postgres, Neon Auth, Object Storage).
+Stack: Next.js 16 (App Router, server components) · TypeScript · Tailwind CSS 4 · Motion · Neon (Postgres, Object Storage).
+
+There are **no customer accounts**: shoppers just enter their name, phone and address at checkout (remembered on their device for next time) and can look an order up at `/track` with the order number + mobile.
 
 ---
 
@@ -10,20 +12,16 @@ Stack: Next.js 16 (App Router, server components) · TypeScript · Tailwind CSS 
 
 1. **Neon project** — in console.neon.tech create a project in **AWS Frankfurt (eu-central-1)** (closest to Egypt, and supports Object Storage).
 2. **Database URLs** — Project → **Connect**: copy the *pooled* string into `DATABASE_URL` and the *direct* one into `DATABASE_URL_UNPOOLED` in `.env.local` (already created; `.env.example` documents every variable).
-3. **Neon Auth** — Project → **Auth** → *Enable Auth*, copy the **Auth URL** into `NEON_AUTH_BASE_URL`. `NEON_AUTH_COOKIE_SECRET` is pre-generated. For password-reset emails, configure an email provider in Auth settings.
-4. **Create tables & import products**
+3. **Create tables & import products**
    ```bash
    npm install
    npm run db:migrate
    npm run import:products -- data/products.csv            # add --mirror-images once storage is set up
    ```
-5. **Make yourself admin** — `npm run dev`, create an account at `/register`, sign in once, then:
-   ```bash
-   npm run make-admin -- you@example.com
-   ```
-6. **Image uploads (optional, recommended)** — Project → **Object storage** → create bucket `media` with access **public_read**, create a credential (storage:read + storage:write), and fill the `AWS_*` variables. Then re-run the import with `--update --mirror-images` so product photos no longer depend on the old store's CDN.
+4. **Dashboard** — `npm run dev`, open `/admin` and enter the password **123456**. Change it right away in **Store settings → Dashboard password** (changing it signs out every other device). Forgot it? `npm run reset-admin-password` sets it back to 123456.
+5. **Image uploads (optional, recommended)** — Project → **Object storage** → create bucket `media` with access **public_read**, create a credential (storage:read + storage:write), and fill the `AWS_*` variables. Then re-run the import with `--update --mirror-images` so product photos no longer depend on the old store's CDN.
 
-Deploy on Vercel: add the same variables (`DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`, `AWS_*`, `NEON_STORAGE_BUCKET`, `NEXT_PUBLIC_SITE_URL`).
+Deploy on Vercel: add the same variables (`DATABASE_URL`, `AWS_*`, `NEON_STORAGE_BUCKET`, `NEXT_PUBLIC_SITE_URL`).
 
 ## 2. How product placement works
 
@@ -57,16 +55,16 @@ Checkout supports the methods enabled in **Store settings → Payment methods**:
 
 ```
 db/migrations/           schema · pricing/order functions · seed · browse/search
-scripts/                 migrate · import-products (+ lib/transform) · make-admin · verify-sql
+scripts/                 migrate · import-products (+ lib/transform) · reset-admin-password · verify-sql
 src/app/(store)/         storefront (own root layout, ar/en, RTL)
-src/app/admin/           dashboard (own root layout, English, staff only)
+src/app/admin/           dashboard (own root layout, English; /admin/login + password-protected (panel) group)
 src/lib/catalog.ts       cached public reads (tag "catalog", revalidated on every admin save)
-src/lib/admin/           auth guard, server actions, entity config
+src/lib/admin/           dashboard password/session, server actions, entity config
 ```
 
 - **Prices are never trusted from the browser.** `quote_cart()` and `place_order()` (Postgres) recompute prices, campaigns, coupons, shipping and stock; orders reserve stock atomically and reject oversells.
-- **Security**: only the Next.js server connects to the database (no client-side DB access). Customers see only their own orders (checked by user id); guests view confirmations with a secret token; every admin page and action checks the staff/admin role server-side; roles live in `profiles`, keyed by the Neon Auth user id.
-- **Performance**: server components, one RPC per listing page (`browse_products`: filters + sort + pagination + facets), trigram search index, cached catalog reads, `next/image` (AVIF/WebP, responsive sizes), CSS-driven reveals, ~115 kB first-load JS on storefront pages, the proxy only runs on /account and /admin.
+- **Security**: only the Next.js server connects to the database (no client-side DB access). Customers view their order with a secret token link (or order number + phone at `/track`). The dashboard uses one password (scrypt-hashed in `settings` key `private_admin_auth`, never read by the storefront) and a signed httpOnly cookie; every admin page and action checks it server-side; wrong attempts are rate-limited.
+- **Performance**: server components, one RPC per listing page (`browse_products`: filters + sort + pagination + facets), trigram search index, cached catalog reads, `next/image` (AVIF/WebP, responsive sizes), CSS-driven reveals, ~115 kB first-load JS on storefront pages.
 - **Old URLs**: `/ar/product/all/<handle>` from the previous store 301-redirects to the new product page.
 
 ## 6. Scripts
@@ -77,4 +75,4 @@ src/lib/admin/           auth guard, server actions, entity config
 | `npm run db:migrate` | apply SQL migrations (tracked, re-runnable) |
 | `npm run db:verify` | run all migrations + an order-flow test in an in-memory Postgres |
 | `npm run import:products -- <csv> [--dry-run] [--update] [--mirror-images]` | import catalog |
-| `npm run make-admin -- <email> [admin\|staff\|customer]` | set a role |
+| `npm run reset-admin-password` | reset the dashboard password to 123456 |

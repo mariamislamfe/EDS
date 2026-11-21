@@ -1,9 +1,8 @@
 export const DATABASE_URL = process.env.DATABASE_URL ?? "";
-export const NEON_AUTH_BASE_URL = process.env.NEON_AUTH_BASE_URL ?? "";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
-/** True when the database and Neon Auth are configured. */
-export const isConfigured = Boolean(DATABASE_URL && NEON_AUTH_BASE_URL);
+/** True when the database is configured. */
+export const isConfigured = Boolean(DATABASE_URL);
 
 /** Neon Object Storage (S3-compatible). Optional: without it, admins paste image URLs. */
 export const STORAGE = {

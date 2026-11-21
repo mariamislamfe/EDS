@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/admin/ui";
 export const metadata = { title: "Website content" };
 
 export default async function ContentAdmin() {
-  const { role } = await requireStaffPage();
+  await requireStaffPage();
   const [settings, banners, testimonials] = await Promise.all([
     q<{ key: string; value: unknown }>(`select key, value from settings where key = any($1)`, [["home_hero", "announcement", "home_sections"]]),
     loadEntityRows("banners"),
@@ -19,7 +19,6 @@ export default async function ContentAdmin() {
     <>
       <PageHeader title="Website content" text="Homepage copy, banners and testimonials. Changes appear on the storefront right after saving." />
       <div className="flex flex-col gap-6">
-        {role !== "admin" && <p className="rounded-xl bg-warn/10 p-3 text-sm text-warn">Hero, announcement and section settings can only be saved by an admin. You can manage banners and testimonials.</p>}
         <HeroForm value={get("home_hero", {})} />
         <AnnouncementForm value={get("announcement", { enabled: false, text_en: "", text_ar: "", href: null })} />
         <SectionsForm value={get("home_sections", {})} />

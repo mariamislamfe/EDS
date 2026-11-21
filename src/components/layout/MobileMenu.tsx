@@ -9,8 +9,8 @@ import { useI18n } from "@/lib/i18n/client";
 
 type Item = { slug: string; name: string };
 
-export function MobileMenu({ t, years, specialties, categories, signedIn, staff }: {
-  t: Dictionary; years: Item[]; specialties: Item[]; categories: Item[]; signedIn: boolean; staff: boolean;
+export function MobileMenu({ t, years, specialties, categories }: {
+  t: Dictionary; years: Item[]; specialties: Item[]; categories: Item[];
 }) {
   const { locale } = useI18n();
   const [open, setOpen] = useState(false);
@@ -57,9 +57,8 @@ export function MobileMenu({ t, years, specialties, categories, signedIn, staff 
               <Link href="/bundles" className="border-b border-line py-4 font-display text-xl font-semibold text-navy">{t.nav.bundles}</Link>
               <Link href="/shop" className="border-b border-line py-4 font-display text-xl font-semibold text-navy">{t.nav.shop}</Link>
               <div className="mt-6 flex flex-col gap-1 text-[0.95rem]">
-                <Link href={signedIn ? "/account" : "/login"} className="py-2">{signedIn ? t.nav.account : t.nav.login}</Link>
+                <Link href="/track" className="py-2">{t.footer.ordersHelp}</Link>
                 <Link href="/wishlist" className="py-2">{t.nav.wishlist}</Link>
-                {staff && <Link href="/admin" className="py-2">{t.nav.admin}</Link>}
                 <Link href="/about" className="py-2">About EDS</Link>
               </div>
             </motion.nav>

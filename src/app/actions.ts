@@ -2,7 +2,6 @@
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { one } from "@/lib/db";
-import { getViewer } from "@/lib/auth/session";
 import { getProduct, getProductsByIds, searchSuggestions } from "@/lib/catalog";
 import { LOCALE_COOKIE, isLocale } from "@/lib/i18n";
 
@@ -83,10 +82,9 @@ export async function placeOrder(input: unknown): Promise<{ ok: true; id: string
       email: "invalid_email", governorate_id: "invalid_governorate", payment_method: "invalid_payment_method", items: "empty_cart" };
     return { ok: false, error: map[field] ?? "generic", field };
   }
-  const viewer = await getViewer();
   try {
     const row = await one<{ o: { id: string; access_token: string; order_number: string } }>(
-      `select public.place_order($1::jsonb, $2) as o`, [JSON.stringify(parsed.data), viewer?.id ?? null]);
+      `select public.place_order($1::jsonb, null) as o`, [JSON.stringify(parsed.data)]);
     const r = row!.o;
     return { ok: true, id: r.id, token: r.access_token, number: r.order_number };
   } catch (e) {
@@ -115,4 +113,16 @@ export async function productsByIds(ids: string[]) {
   const parsed = z.array(z.string().uuid()).max(60).safeParse(ids);
   if (!parsed.success) return [];
   return getProductsByIds(parsed.data);
+}
+
+/** Guest order lookup: order number + the phone it was placed with → the private order page. */
+export async function trackOrder(input: { number: string; phone: string }): Promise<{ ok: true; href: string } | { ok: false }> {
+  const p = z.object({ number: z.string().trim().min(3).max(40), phone: z.string().trim().min(6).max(20) }).safeParse(input);
+  if (!p.success) return { ok: false };
+  const digits = (v: string) => v.replace(/\D/g, "").slice(-10);
+  const num = p.data.number.toUpperCase().replace(/^(EDS-?)?/, "EDS-");
+  const row = await one<{ id: string; access_token: string; phone: string }>(
+    `select id, access_token, phone from orders where order_number = $1`, [num]);
+  if (!row || digits(row.phone) !== digits(p.data.phone)) return { ok: false };
+  return { ok: true, href: `/order/${row.id}?token=${row.access_token}` };
 }

@@ -110,25 +110,16 @@ const en = {
       cart_changed: "Some items changed price or availability. Review your cart and try again.",
       invalid_coupon: "The coupon is no longer valid. Remove it and try again.", generic: "We couldn't place your order. Try again.",
     },
-    signInHint: "Have an account? Sign in to track this order later.",
   },
   order: {
     thanks: "Order placed", number: "Order number", received: "We've received your order and will call you to confirm it.",
     status: "Status", placed: "Placed", items: "Items", deliverTo: "Deliver to", paymentMethod: "Payment",
-    trackHint: "Keep this page's link to check your order status.", notFound: "We couldn't find that order.",
+    trackHint: "To check your order later, use “Track an order” with your order number and mobile.", notFound: "We couldn't find that order.",
     statuses: { pending: "Pending", confirmed: "Confirmed", processing: "Preparing", shipped: "Shipped", delivered: "Delivered", cancelled: "Cancelled", refunded: "Refunded" },
   },
-  account: {
-    title: "Your account", orders: "Your orders", noOrders: "You haven't placed any orders yet.", profile: "Profile",
-    saveProfile: "Save profile", viewOrder: "View order",
-  },
-  auth: {
-    signIn: "Sign in", signUp: "Create account", email: "Email", password: "Password", fullName: "Full name", phone: "Mobile number",
-    noAccount: "New to EDS?", haveAccount: "Already have an account?", forgot: "Forgot password?",
-    sendReset: "Send reset link", resetSent: "If that email has an account, a reset link is on its way.",
-    checkEmail: "Check your email to confirm your account, then sign in.", invalid: "Email or password is incorrect.",
-    weakPassword: "Use at least 8 characters.", newPassword: "New password", updatePassword: "Update password",
-    passwordUpdated: "Password updated.",
+  track: {
+    title: "Track your order", text: "Enter your order number and the mobile number you ordered with.",
+    number: "Order number", phone: "Mobile number", submit: "Find my order", notFound: "No order matches that number and mobile.",
   },
   wishlist: { title: "Saved products", empty: "You haven't saved anything yet.", emptyHint: "Tap the heart on any product to keep it here." },
   footer: {
@@ -257,25 +248,16 @@ const ar: Dictionary = {
       cart_changed: "تغيّر سعر أو توفر بعض المنتجات. راجع السلة وحاول مرة أخرى.",
       invalid_coupon: "الكود لم يعد صالحًا. احذفه وحاول مرة أخرى.", generic: "لم نتمكن من تأكيد طلبك. حاول مرة أخرى.",
     },
-    signInHint: "عندك حساب؟ سجّل دخولك علشان تتابع الطلب بعدين.",
   },
   order: {
     thanks: "تم تسجيل طلبك", number: "رقم الطلب", received: "استلمنا طلبك وهنتواصل معاك تليفونيًا لتأكيده.",
     status: "الحالة", placed: "تاريخ الطلب", items: "المنتجات", deliverTo: "التوصيل إلى", paymentMethod: "الدفع",
-    trackHint: "احتفظ برابط الصفحة دي لمتابعة حالة طلبك.", notFound: "لم نجد هذا الطلب.",
+    trackHint: "علشان تتابع طلبك بعدين، ادخل على “تتبع طلب” برقم الطلب ورقم الموبايل.", notFound: "لم نجد هذا الطلب.",
     statuses: { pending: "قيد المراجعة", confirmed: "تم التأكيد", processing: "جارٍ التجهيز", shipped: "تم الشحن", delivered: "تم التوصيل", cancelled: "ملغي", refunded: "مسترد" },
   },
-  account: {
-    title: "حسابي", orders: "طلباتي", noOrders: "لم تقم بأي طلب بعد.", profile: "البيانات الشخصية",
-    saveProfile: "حفظ البيانات", viewOrder: "عرض الطلب",
-  },
-  auth: {
-    signIn: "تسجيل الدخول", signUp: "إنشاء حساب", email: "البريد الإلكتروني", password: "كلمة المرور", fullName: "الاسم بالكامل", phone: "رقم الموبايل",
-    noAccount: "جديد على EDS؟", haveAccount: "عندك حساب بالفعل؟", forgot: "نسيت كلمة المرور؟",
-    sendReset: "إرسال رابط الاستعادة", resetSent: "لو البريد مسجل عندنا، هيوصلك رابط الاستعادة.",
-    checkEmail: "راجع بريدك لتأكيد الحساب، ثم سجّل الدخول.", invalid: "البريد أو كلمة المرور غير صحيحة.",
-    weakPassword: "استخدم 8 حروف على الأقل.", newPassword: "كلمة المرور الجديدة", updatePassword: "تحديث كلمة المرور",
-    passwordUpdated: "تم تحديث كلمة المرور.",
+  track: {
+    title: "تتبع طلبك", text: "اكتب رقم الطلب ورقم الموبايل اللي طلبت بيه.",
+    number: "رقم الطلب", phone: "رقم الموبايل", submit: "اعرض طلبي", notFound: "مفيش طلب بالرقم ده والموبايل ده.",
   },
   wishlist: { title: "المنتجات المحفوظة", empty: "لم تحفظ أي منتج بعد.", emptyHint: "اضغط على القلب في أي منتج لحفظه هنا." },
   footer: {

@@ -11,11 +11,10 @@
     "db:migrate": "tsx scripts/migrate.ts",
     "db:verify": "tsx scripts/verify-sql.ts",
     "import:products": "tsx scripts/import-products.ts",
-    "make-admin": "tsx scripts/make-admin.ts"
+    "reset-admin-password": "tsx scripts/reset-admin-password.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1171.0",
-    "@neon/auth": "^0.8.2",
     "@types/three": "^0.170.0",
     "gsap": "^3.13.0",
     "lucide-react": "^1.75.0",

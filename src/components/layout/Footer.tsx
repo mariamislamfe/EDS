@@ -62,7 +62,7 @@ export async function Footer() {
             <li><Link className="hover:text-teal" href="/shop">{t.nav.shop}</Link></li>
             <li><Link className="hover:text-teal" href="/shop?sort=newest">{t.home.newTitle}</Link></li>
             <li><Link className="hover:text-teal" href="/wishlist">{t.nav.wishlist}</Link></li>
-            <li><Link className="hover:text-teal" href="/account">{t.footer.ordersHelp}</Link></li>
+            <li><Link className="hover:text-teal" href="/track">{t.footer.ordersHelp}</Link></li>
             <li><Link className="hover:text-teal" href="/about">About EDS</Link></li>
           </ul>
         </nav>

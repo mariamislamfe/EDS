@@ -3,7 +3,6 @@ import Link from "next/link";
 import { getCategories, getSettings, getSpecialties, getTaxonomyCounts, getYears } from "@/lib/catalog";
 import { getI18n } from "@/lib/i18n/server";
 import { pick } from "@/lib/i18n";
-import { getViewer as getSessionViewer, isStaffRole } from "@/lib/auth/session";
 import { HeaderActions } from "./HeaderActions";
 import { MobileMenu } from "./MobileMenu";
 import { MainNav } from "./MainNav";
@@ -13,18 +12,13 @@ async function safe<T>(p: Promise<T>, fallback: T): Promise<T> {
   try { return await p; } catch { return fallback; }
 }
 
-async function getViewer() {
-  const v = await safe(getSessionViewer(), null);
-  return { signedIn: Boolean(v), staff: isStaffRole(v?.role) };
-}
-
 const emptyStats = { category: {}, specialty: {}, year: {} } as Awaited<ReturnType<typeof getTaxonomyCounts>>;
 
 export async function Header() {
   const { locale, t } = await getI18n();
-  const [years, specialties, categories, settings, stats, viewer] = await Promise.all([
+  const [years, specialties, categories, settings, stats] = await Promise.all([
     safe(getYears(), []), safe(getSpecialties(), []), safe(getCategories(), []),
-    safe(getSettings(), null), safe(getTaxonomyCounts(), emptyStats), getViewer(),
+    safe(getSettings(), null), safe(getTaxonomyCounts(), emptyStats),
   ]);
   const ann = settings?.announcement;
   const annText = ann?.enabled ? pick(locale, ann.text_en, ann.text_ar) : "";
@@ -59,8 +53,6 @@ export async function Header() {
             years={navYears.map(({ slug, name }) => ({ slug, name }))}
             specialties={navSpecs}
             categories={navCats.map(({ slug, name }) => ({ slug, name }))}
-            signedIn={viewer.signedIn}
-            staff={viewer.staff}
           />
           <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="EDS — Al Esraa Dental Store, home">
             <Image src="/brand/eds-mark.png" alt="" width={44} height={44} priority className="size-9 lg:size-10" />
@@ -74,7 +66,7 @@ export async function Header() {
             <MainNav years={navYears} specialties={navSpecs} categories={navCats} />
           </nav>
 
-          <HeaderActions signedIn={viewer.signedIn} staff={viewer.staff} />
+          <HeaderActions />
         </div>
       </HeaderShell>
     </>

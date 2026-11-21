@@ -1,7 +1,8 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { saveSetting, setUserRole } from "@/lib/admin/catalog-actions";
+import { saveSetting } from "@/lib/admin/catalog-actions";
+import { updateAdminPassword } from "@/lib/admin/session-actions";
 import type { PaymentMethod, StoreSettings } from "@/lib/types";
 import { Card, Field, ImageInput, Toggle, useToast } from "./ui";
 
@@ -12,7 +13,7 @@ function useSaver(key: string) {
   const save = (value: unknown) => start(async () => {
     const r = await saveSetting(key, value);
     if (r.ok) { toast("Saved — the storefront is updated"); router.refresh(); }
-    else toast(r.error === "forbidden" ? "Only admins can change these settings" : r.error, "error");
+    else toast(r.error === "forbidden" ? "Your session expired — sign in again" : r.error, "error");
   });
   return { pending, save };
 }
@@ -176,27 +177,30 @@ export function MetaPixelForm({ value }: { value: { ids: string[] } }) {
   );
 }
 
-export function TeamForm() {
-  const router = useRouter();
+export function PasswordForm() {
   const toast = useToast();
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("staff");
+  const empty = { current: "", next: "", confirm: "" };
+  const [v, setV] = useState(empty);
   const [pending, start] = useTransition();
+  const input = (k: keyof typeof v, label: string, help?: string) => (
+    <Field label={label} help={help}>
+      <input className="field" type="password" dir="ltr" required minLength={k === "current" ? 1 : 6}
+        autoComplete={k === "current" ? "current-password" : "new-password"} value={v[k]} onChange={(e) => setV({ ...v, [k]: e.target.value })} />
+    </Field>
+  );
   return (
-    <Card title="Change a member's role">
-      <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => {
+    <Card title="Dashboard password">
+      <form className="grid gap-4 sm:grid-cols-3" onSubmit={(e) => {
         e.preventDefault();
-        start(async () => { const r = await setUserRole(email, role); if (r.ok) { toast("Role updated"); setEmail(""); router.refresh(); } else toast(r.error, "error"); });
+        start(async () => {
+          const r = await updateAdminPassword(v);
+          if (r.ok) { toast("Password changed — other devices were signed out"); setV(empty); } else toast(r.error, "error");
+        });
       }}>
-        <Field label="Account email" className="min-w-64 flex-1"><input className="field" type="email" dir="ltr" required value={email} onChange={(e) => setEmail(e.target.value)} /></Field>
-        <Field label="Role">
-          <select className="field" value={role} onChange={(e) => setRole(e.target.value)}>
-            <option value="staff">Staff — products, orders, content</option>
-            <option value="admin">Admin — everything incl. settings & team</option>
-            <option value="customer">Customer — remove dashboard access</option>
-          </select>
-        </Field>
-        <button className="btn btn-primary" disabled={pending}>Apply</button>
+        {input("current", "Current password", "The default is 123456")}
+        {input("next", "New password", "At least 6 characters")}
+        {input("confirm", "Repeat new password")}
+        <SaveBtn pending={pending} />
       </form>
     </Card>
   );
