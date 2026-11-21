@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Dictionary } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -17,6 +18,9 @@ export function MobileMenu({ t, years, specialties, categories }: {
   const [section, setSection] = useState<string | null>("students");
   const pathname = usePathname();
   const rtl = locale === "ar";
+  const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- portal target exists only after hydration
+  useEffect(() => setMounted(true), []);
 
   useEffect(() => setOpen(false), [pathname]);
   useEffect(() => {
@@ -34,7 +38,8 @@ export function MobileMenu({ t, years, specialties, categories }: {
       <button type="button" onClick={() => setOpen(true)} className="-ms-2 grid size-10 place-items-center rounded-full text-navy lg:hidden" aria-label={t.nav.menu} aria-expanded={open}>
         <Menu className="size-6" />
       </button>
-      <AnimatePresence>
+      {/* Portal: the header gets backdrop-blur when scrolled, which would trap this fixed overlay inside it */}
+      {mounted && createPortal(<AnimatePresence>
         {open && (
           <div className="fixed inset-0 z-[60] lg:hidden">
             <motion.div className="absolute inset-0 bg-navy-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setOpen(false)} />
@@ -64,7 +69,7 @@ export function MobileMenu({ t, years, specialties, categories }: {
             </motion.nav>
           </div>
         )}
-      </AnimatePresence>
+      </AnimatePresence>, document.body)}
     </>
   );
 }
