@@ -1,7 +1,6 @@
 "use client";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SlidersHorizontal, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState, useTransition } from "react";
 import type { BrowseResult } from "@/lib/types";
 import { fmt } from "@/lib/i18n";
@@ -113,13 +112,11 @@ export function FilterPanel({ facets, categories, years, specialties, locked = [
       <button type="button" onClick={() => setSheet(true)} className="btn btn-ghost btn-sm lg:hidden">
         <SlidersHorizontal className="size-4" /> {t.common.filters}
       </button>
-      <AnimatePresence>
-        {sheet && (
+      {sheet && (
           <div className="fixed inset-0 z-[60] lg:hidden">
-            <motion.div className="absolute inset-0 bg-navy-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setSheet(false)} />
-            <motion.div role="dialog" aria-modal="true" aria-label={t.common.filters}
-              initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", damping: 34, stiffness: 340 }}
-              className="absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-white">
+            <div className="menu-scrim absolute inset-0 bg-navy-deep/40" onClick={() => setSheet(false)} />
+            <div role="dialog" aria-modal="true" aria-label={t.common.filters}
+              className="sheet-up absolute inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-3xl bg-white">
               <div className="flex items-center justify-between border-b border-line px-5 py-4">
                 <h2 className="text-lg font-semibold">{t.common.filters}</h2>
                 <button type="button" onClick={() => setSheet(false)} className="grid size-10 place-items-center rounded-full hover:bg-cloud" aria-label={t.nav.close}><X className="size-5" /></button>
@@ -128,10 +125,9 @@ export function FilterPanel({ facets, categories, years, specialties, locked = [
               <div className="border-t border-line p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <button type="button" onClick={() => setSheet(false)} className="btn btn-primary w-full">{fmt(t.filters.show, { n: total })}</button>
               </div>
-            </motion.div>
+            </div>
           </div>
         )}
-      </AnimatePresence>
     </>
   );
 }

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { browseProducts, getBundles, getTaxonomyCounts, getYear, getYearChecklist, getYears } from "@/lib/catalog";
+import { browseProducts, getBundles, getTaxonomyCounts, getYear, getYearChecklist, getYears, getYearSubjects } from "@/lib/catalog";
+import { MotionReady } from "@/components/fx/MotionLayer";
+import { cn } from "@/lib/utils";
 import { getI18n } from "@/lib/i18n/server";
 import { fmt, pick } from "@/lib/i18n";
 import { YearRuler } from "@/components/home/YearRuler";
@@ -26,11 +28,14 @@ export default async function YearPage({ params, searchParams }: Props) {
   const [{ year: slug }, sp, { t, locale }] = await Promise.all([params, searchParams, getI18n()]);
   const year = await getYear(slug);
   if (!year) notFound();
-  const [years, stats, bundles, essentials, checklistItems] = await Promise.all([
-    getYears(), getTaxonomyCounts(), getBundles({ yearSlug: year.slug }),
+  const [years, stats, bundles, essentials, checklistItems, subjects] = await Promise.all([
+    getYears(), getTaxonomyCounts(), getBundles({ yearSlug: year.slug, kind: "kit" }),
     browseProducts({ year: year.slug, audience: "student", essential: true, per_page: 12 }),
     getYearChecklist(year.id),
+    getYearSubjects(year.id),
   ]);
+  const subjectId = typeof sp.subject === "string" ? sp.subject : null;
+  const subject = subjects.find((x) => x.id === subjectId) ?? null;
   const next = years.find((y) => y.number === year.number + 1);
   const nextProducts = next ? await browseProducts({ year: next.slug, audience: "student", sort: "featured", per_page: 12 }) : null;
   const name = pick(locale, year.name_en, year.name_ar);
@@ -66,6 +71,43 @@ export default async function YearPage({ params, searchParams }: Props) {
         </div>
       </section>
 
+      {subjects.length > 0 && (
+        <section className="container-x py-12" aria-labelledby="subjects-title">
+          <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+            <h2 id="subjects-title" className="display text-[clamp(1.8rem,3.6vw,3rem)] leading-[0.95]">
+              Pick a <span className="font-serif font-normal italic text-teal-strong">subject.</span>
+            </h2>
+            <p className="text-sm text-muted">{subjects.length} subjects in {name}</p>
+          </div>
+          <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" data-stagger>
+            {subjects.map((sub, i) => {
+              const on = subject?.id === sub.id;
+              return (
+                <li key={sub.id}>
+                  <Link href={on ? `/students/${year.slug}#all` : `/students/${year.slug}?subject=${sub.id}#all`} scroll={false} aria-current={on ? "true" : undefined}
+                    className={cn("group relative flex h-full min-h-40 flex-col justify-between overflow-hidden rounded-[1.5rem] border p-5 transition-[background-color,border-color,transform] duration-500 ease-[var(--ease-out-soft)] hover:-translate-y-1",
+                      on ? "border-navy bg-navy-deep text-white" : "border-line bg-white hover:border-navy/40")}>
+                    <span className="flex items-start justify-between gap-2">
+                      <span className={cn("font-mono text-xs", on ? "text-teal" : "text-teal-strong")}>{String(i + 1).padStart(2, "0")}</span>
+                      <span className="flex -space-x-2">
+                        {(sub.image_url ? [sub.image_url] : sub.covers.slice(0, 3)).map((c) => (
+                          <span key={c} className="product-tile relative size-9 overflow-hidden rounded-full ring-2 ring-white"><Image src={c} alt="" fill sizes="36px" className="object-contain p-1" /></span>
+                        ))}
+                      </span>
+                    </span>
+                    <span>
+                      <span className={cn("block font-display text-lg font-semibold leading-tight", on ? "text-white" : "text-navy-deep")}>{pick(locale, sub.name_en, sub.name_ar)}</span>
+                      {sub.name_ar && <span className={cn("block text-sm", on ? "text-white/60" : "text-muted")} dir="rtl">{sub.name_ar}</span>}
+                      <span className={cn("mt-1 block text-xs", on ? "text-teal" : "text-muted")}>{Number(sub.products)} products</span>
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {bundles.length > 0 && (
         <section className="container-x py-12" data-reveal>
           <SectionHead title={t.students.bundles} />
@@ -84,11 +126,15 @@ export default async function YearPage({ params, searchParams }: Props) {
         </section>
       )}
 
-      <section className="container-x py-12" id="all">
-        <SectionHead title={fmt(t.students.allForYear, { year: name })} />
+      <section className="container-x scroll-mt-24 py-12" id="all">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <SectionHead title={subject ? `${pick(locale, subject.name_en, subject.name_ar)} — ${name}` : fmt(t.students.allForYear, { year: name })} />
+          {subject && <Link href={`/students/${year.slug}#all`} scroll={false} className="btn btn-ghost btn-sm mb-6">All subjects ×</Link>}
+        </div>
+        {subject?.description_en && <p className="-mt-3 mb-6 max-w-2xl text-muted">{subject.description_en}</p>}
         {count > 0 ? (
           <Suspense key={JSON.stringify(sp)} fallback={<ListingSkeleton />}>
-            <Listing basePath={`/students/${year.slug}`} searchParams={sp} fixed={{ year: year.slug, audience: "student" }} t={t} locale={locale} />
+            <Listing basePath={`/students/${year.slug}`} searchParams={sp} fixed={{ year: year.slug, audience: "student", ...(subject ? { subject: subject.id } : {}) }} t={t} locale={locale} />
           </Suspense>
         ) : (
           <EmptyState title={t.students.noYearProducts} text={t.students.noYearProductsHint}>
@@ -101,6 +147,7 @@ export default async function YearPage({ params, searchParams }: Props) {
         <ProductRailSection title={`${t.students.related} — ${pick(locale, next.name_en, next.name_ar)}`} products={nextProducts.items}
           href={`/students/${next.slug}`} linkLabel={t.common.seeAll} t={t} locale={locale} />
       )}
+      <MotionReady />
     </>
   );
 }

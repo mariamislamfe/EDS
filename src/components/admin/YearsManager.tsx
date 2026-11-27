@@ -11,7 +11,7 @@ export type YearRow = YearData & { product_count: number; checklist_names: Recor
 
 const blank = (n: number): YearRow => ({
   id: null, slug: "", number: n, name_en: "", name_ar: "", tagline_en: "", tagline_ar: "", intro_en: "", intro_ar: "",
-  hero_image_url: null, is_enabled: true, sort_order: n, checklist: [], product_count: 0, checklist_names: {},
+  hero_image_url: null, is_enabled: true, sort_order: n, checklist: [], subjects: [], product_count: 0, checklist_names: {},
 });
 
 export function YearsManager({ years }: { years: YearRow[] }) {
@@ -29,7 +29,7 @@ export function YearsManager({ years }: { years: YearRow[] }) {
               {y.is_enabled ? <Badge tone="ok">Enabled</Badge> : <Badge>Hidden</Badge>}
             </div>
             <span className="font-semibold text-navy">{y.name_en} <span className="font-normal text-muted">· {y.name_ar}</span></span>
-            <span className="text-sm text-muted">{y.product_count} products · {y.checklist.length} checklist items</span>
+            <span className="text-sm text-muted">{y.product_count} products · {y.subjects.length} subjects · {y.checklist.length} checklist items</span>
           </button>
         ))}
       </div>
@@ -75,6 +75,28 @@ function YearEditor({ year, onClose }: { year: YearRow; onClose: () => void }) {
             <Field label="Introduction (Arabic)"><textarea className="field min-h-28" dir="rtl" value={y.intro_ar ?? ""} onChange={(e) => set("intro_ar", e.target.value)} /></Field>
           </div>
           <Field label="Hero image (optional)"><ImageInput value={y.hero_image_url} onChange={(v) => set("hero_image_url", v)} folder="years" aspect="aspect-[21/8]" /></Field>
+
+          <Card title="Subjects (المواد)">
+            <p className="mb-3 text-sm text-muted">Split this year into its subjects (e.g. Dental Anatomy, Histology, Operative). On the year page students pick a subject and see only its tools. Assign products to subjects in each product&apos;s editor.</p>
+            <ul className="flex flex-col gap-2">
+              {y.subjects.map((sub, i) => {
+                const upd = (patch: Partial<typeof sub>) => set("subjects", y.subjects.map((x, k) => (k === i ? { ...x, ...patch } : x)));
+                return (
+                  <li key={sub.id ?? `new-${i}`} className="grid gap-2 rounded-xl border border-line p-3 sm:grid-cols-[1fr_1fr_auto]">
+                    <input className="field !min-h-9" placeholder="Subject (English)" value={sub.name_en} onChange={(e) => upd({ name_en: e.target.value, ...(sub.id ? {} : { slug: slugify(e.target.value) }) })} />
+                    <input className="field !min-h-9" dir="rtl" placeholder="المادة (عربي)" value={sub.name_ar ?? ""} onChange={(e) => upd({ name_ar: e.target.value })} />
+                    <div className="flex gap-1">
+                      <button type="button" className="btn btn-ghost btn-sm" disabled={i === 0} onClick={() => { const a = [...y.subjects]; [a[i - 1], a[i]] = [a[i], a[i - 1]]; set("subjects", a); }} aria-label="Move up">↑</button>
+                      <button type="button" className="btn btn-ghost btn-sm text-danger" onClick={() => set("subjects", y.subjects.filter((_, k) => k !== i))}>Remove</button>
+                    </div>
+                    <input className="field !min-h-9 sm:col-span-2" placeholder="Short description (optional)" value={sub.description_en ?? ""} onChange={(e) => upd({ description_en: e.target.value })} />
+                    <input className="field !min-h-9 font-mono text-xs" dir="ltr" placeholder="url-slug" value={sub.slug} onChange={(e) => upd({ slug: e.target.value })} />
+                  </li>
+                );
+              })}
+            </ul>
+            <button type="button" className="btn btn-ghost btn-sm mt-3" onClick={() => set("subjects", [...y.subjects, { id: null, slug: "", name_en: "", name_ar: null, description_en: null, image_url: null }])}><Plus className="size-4" /> Add subject</button>
+          </Card>
 
           <Card title="Required tools checklist">
             <p className="mb-3 text-sm text-muted">Optional. Students tick items off on the year page. Link a product so they can buy it directly.</p>

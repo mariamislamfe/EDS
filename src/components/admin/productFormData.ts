@@ -6,14 +6,15 @@ import type { PickedProduct } from "./ui";
 type Opt = { value: string; label: string; slug?: string };
 
 export async function loadProductOptions() {
-  const [brands, categories, years, specialties, types] = await Promise.all([
+  const [brands, categories, years, specialties, types, subjects] = await Promise.all([
     q<Opt>(`select id as value, name as label from brands order by name`),
     q<Opt>(`select id as value, name_en as label, slug from categories order by sort_order`),
     q<Opt>(`select id as value, name_en as label from academic_years order by number`),
     q<Opt>(`select id as value, name_en as label from specialties order by sort_order`),
     q<{ product_type: string }>(`select distinct product_type from products where product_type is not null order by 1`),
+    q<{ value: string; label: string; year_id: string }>(`select id as value, name_en as label, year_id from year_subjects order by sort_order`),
   ]);
-  return { brands, categories, years, specialties, types: types.map((t) => t.product_type) };
+  return { brands, categories, years, specialties, types: types.map((t) => t.product_type), subjects };
 }
 
 export const EMPTY_PRODUCT: ProductFormData = {
@@ -22,13 +23,13 @@ export const EMPTY_PRODUCT: ProductFormData = {
   price: 0, compare_at_price: null, cost_price: null, track_inventory: false, stock_qty: 0, low_stock_threshold: 3,
   allow_backorder: false, audience: "unassigned", is_published: false, is_featured: false, is_best_seller: false,
   is_new_arrival: true, bundle_eligible: true, specifications: [], option_names: [], images: [], variants: [],
-  category_ids: [], primary_category_id: null, years: [], specialty_ids: [], related_ids: [],
+  category_ids: [], primary_category_id: null, years: [], specialty_ids: [], subject_ids: [], related_ids: [],
 };
 
 export async function loadProduct(id: string): Promise<{ data: ProductFormData; related: PickedProduct[] } | null> {
   const p = await one<Record<string, unknown> & { id: string; primary_category_id: string | null }>(`select * from products where id = $1`, [id]);
   if (!p) return null;
-  const [images, variants, cats, years, specs, related] = await Promise.all([
+  const [images, variants, cats, years, specs, related, subs] = await Promise.all([
     q<{ url: string }>(`select url from product_images where product_id = $1 order by sort_order`, [id]),
     q<ProductFormData["variants"][number]>(
       `select id, sku, options, price, compare_at_price, stock_qty, image_url, is_active from product_variants where product_id = $1 order by sort_order`, [id]),
@@ -40,6 +41,7 @@ export async function loadProduct(id: string): Promise<{ data: ProductFormData; 
               (select url from product_images i where i.product_id = p.id order by sort_order limit 1) as image
          from related_products r join products p on p.id = r.related_id
         where r.product_id = $1 order by r.sort_order`, [id]),
+    q<{ subject_id: string }>(`select subject_id from product_subjects where product_id = $1`, [id]),
   ]);
   const catIds = cats.map((c) => c.category_id);
   const primary = p.primary_category_id;
@@ -64,6 +66,7 @@ export async function loadProduct(id: string): Promise<{ data: ProductFormData; 
       primary_category_id: primary,
       years,
       specialty_ids: specs.map((x) => x.specialty_id),
+      subject_ids: subs.map((x) => x.subject_id),
       related_ids: [],
     },
     related,

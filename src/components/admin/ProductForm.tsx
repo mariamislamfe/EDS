@@ -18,7 +18,7 @@ export interface ProductFormData extends Omit<ProductData, "variants"> {
 export function ProductForm({ initial, related: initialRelated, options }: {
   initial: ProductFormData;
   related: PickedProduct[];
-  options: { brands: Opt[]; categories: Opt[]; years: Opt[]; specialties: Opt[]; types: string[] };
+  options: { brands: Opt[]; categories: Opt[]; years: Opt[]; specialties: Opt[]; types: string[]; subjects: (Opt & { year_id: string })[] };
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -140,6 +140,24 @@ export function ProductForm({ initial, related: initialRelated, options }: {
                 })}
               </div>
             </div>
+            {p.years.some((y) => options.subjects.some((s) => s.year_id === y.year_id)) && (
+              <div>
+                <p className="label">Subjects <span className="font-normal text-muted">— which subject(s) of the chosen years use this</span></p>
+                <div className="flex flex-col gap-2">
+                  {p.years.map((y) => {
+                    const subs = options.subjects.filter((s) => s.year_id === y.year_id);
+                    if (!subs.length) return null;
+                    return (
+                      <div key={y.year_id} className="flex flex-wrap items-center gap-2">
+                        <span className="w-28 text-xs text-muted">{options.years.find((o) => o.value === y.year_id)?.label}</span>
+                        <Chips options={subs} value={p.subject_ids.filter((id) => subs.some((s) => s.value === id))}
+                          onChange={(v) => set("subject_ids", [...p.subject_ids.filter((id) => !subs.some((s) => s.value === id)), ...v])} />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div>
               <p className="label">Dental specialties</p>
               <Chips options={options.specialties} value={p.specialty_ids} onChange={(v) => set("specialty_ids", v)} />

@@ -7,6 +7,8 @@ import { pick } from "@/lib/i18n";
 import { one } from "@/lib/db";
 import { OrderDetail, type OrderData } from "@/components/checkout/OrderDetail";
 import { EmptyState } from "@/components/ui/Section";
+import { getCustomer } from "@/lib/customer/auth";
+import Link from "next/link";
 
 export const metadata: Metadata = { robots: { index: false } };
 
@@ -23,7 +25,7 @@ export default async function OrderPage({ params, searchParams }: Props) {
   if (!data) {
     return <div className="container-x py-20"><EmptyState title={t.order.notFound} /></div>;
   }
-  const settings = await getSettings();
+  const [settings, me] = await Promise.all([getSettings(), getCustomer()]);
   const pm = settings.paymentMethods.find((m) => m.id === data!.order.payment_method);
   const instructions = pm ? pick(locale, pm.instructions_en, pm.instructions_ar) : "";
 
@@ -34,7 +36,9 @@ export default async function OrderPage({ params, searchParams }: Props) {
         <h1 className="text-[clamp(2rem,4.5vw,3.2rem)] font-bold leading-none tracking-[-0.03em] rtl:leading-tight rtl:tracking-normal">{t.order.thanks}</h1>
         <p className="max-w-xl text-lg text-muted">{t.order.received}</p>
         {instructions && pm?.id !== "cod" && <p className="max-w-xl whitespace-pre-line rounded-2xl bg-mist p-4 text-navy">{instructions}</p>}
-        <p className="text-sm text-muted">{t.order.trackHint}</p>
+        {me ? (
+          <p className="text-sm text-muted">This order is saved in <Link href="/account" className="text-teal-strong underline underline-offset-4">your account</Link>, with all your previous orders.</p>
+        ) : <p className="text-sm text-muted">{t.order.trackHint}</p>}
       </div>
       <OrderDetail data={data} t={t} locale={locale} paymentLabel={pm ? pick(locale, pm.label_en, pm.label_ar) : data.order.payment_method} />
     </div>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getProduct, getRelatedProducts } from "@/lib/catalog";
+import { getPairedProducts, getProduct, getRelatedProducts } from "@/lib/catalog";
 import { getI18n } from "@/lib/i18n/server";
 import { pick } from "@/lib/i18n";
 import { SITE_URL } from "@/lib/env";
@@ -31,7 +31,11 @@ export default async function ProductPage({ params }: Props) {
   const [{ slug }, { t, locale }] = await Promise.all([params, getI18n()]);
   const product = await getProduct(decodeURIComponent(slug));
   if (!product) notFound();
-  const related = await getRelatedProducts(product.id, product.categories.map((c) => c.id));
+  const [relatedAll, paired] = await Promise.all([
+    getRelatedProducts(product.id, product.categories.map((c) => c.id)),
+    getPairedProducts(product.id),
+  ]);
+  const related = relatedAll.filter((r) => !paired.some((x) => x.id === r.id));
   const name = pick(locale, product.name_en, product.name_ar);
   const description = pick(locale, product.description_en, product.description_ar);
   const short = pick(locale, product.short_description_en, product.short_description_ar);
@@ -85,7 +89,7 @@ export default async function ProductPage({ params }: Props) {
         </div>
 
         {(description || product.specifications.length > 0) && (
-          <div className="mt-16 grid gap-12 border-t border-line pt-12 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+          <div className={`mt-16 grid gap-12 border-t border-line pt-12 lg:gap-14 ${description && product.specifications.length > 0 ? "lg:grid-cols-[1.15fr_1fr]" : ""}`}>
             {description && (
               <section aria-labelledby="desc">
                 <h2 id="desc" className="mb-5 text-xl font-semibold">{t.product.description}</h2>
@@ -109,6 +113,14 @@ export default async function ProductPage({ params }: Props) {
         )}
       </div>
 
+      {paired.length > 0 && (
+        <ProductRailSection
+          title="Use it together"
+          text="Items that go with this one — chosen by our team."
+          products={paired} t={t} locale={locale}
+          className="mt-8 rounded-[2.5rem] bg-aqua !py-12 lg:!py-16"
+        />
+      )}
       <ProductRailSection title={t.product.related} products={related} t={t} locale={locale} />
       <RecentlyViewed excludeId={product.id} />
     </>

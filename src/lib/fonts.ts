@@ -19,6 +19,7 @@ export const jetbrains = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains",
   display: "swap",
+  preload: false, // small labels only; swaps in when ready
   weight: ["400", "500"],
 });
 
@@ -27,6 +28,7 @@ export const readex = Readex_Pro({
   subsets: ["arabic"],
   variable: "--font-readex",
   display: "swap",
+  preload: false, // only fetched when an Arabic glyph is actually on the page
   weight: ["400", "500", "600"],
 });
 

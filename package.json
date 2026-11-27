@@ -14,11 +14,10 @@
     "reset-admin-password": "tsx scripts/reset-admin-password.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "@aws-sdk/client-s3": "^3.1171.0",
     "@types/three": "^0.170.0",
-    "gsap": "^3.13.0",
     "lucide-react": "^1.75.0",
-    "motion": "^14.14.0",
     "next": "^16.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0",

@@ -3,9 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
+import { enterWorld } from "@/components/fx/Cinematic";
 
 type Year = { slug: string; name: string; number: number; tagline: string; count: number };
 type Item = { slug: string; name: string; count?: number; cover?: string | null };
@@ -18,11 +18,13 @@ type Panel = "students" | "dentists" | "categories" | null;
 export function MainNav({ years, specialties, categories }: { years: Year[]; specialties: Item[]; categories: Item[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState<Panel>(null);
-  const [pill, setPill] = useState<{ x: number; w: number; on: boolean }>({ x: 0, w: 0, on: false });
+  // `snap` = the pill was hidden: place it instantly under the item, then fade in (no slide from the edge)
+  const [pill, setPill] = useState<{ x: number; y: number; w: number; h: number; on: boolean; snap: boolean }>({ x: 0, y: 0, w: 0, h: 0, on: false, snap: true });
   const nav = useRef<HTMLDivElement>(null);
   const closeTimer = useRef<number>(0);
 
-  useEffect(() => setOpen(null), [pathname]);
+  const [lastPath, setLastPath] = useState(pathname);
+  if (lastPath !== pathname) { setLastPath(pathname); setOpen(null); }
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(null);
     document.addEventListener("keydown", onKey);
@@ -32,7 +34,7 @@ export function MainNav({ years, specialties, categories }: { years: Year[]; spe
   const point = useCallback((el: HTMLElement | null) => {
     if (!el || !nav.current) return;
     const a = el.getBoundingClientRect(), b = nav.current.getBoundingClientRect();
-    setPill({ x: a.left - b.left, w: a.width, on: true });
+    setPill((p) => ({ x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height, on: true, snap: !p.on }));
   }, []);
 
   const enter = (panel: Panel) => (e: React.SyntheticEvent<HTMLElement>) => {
@@ -41,7 +43,7 @@ export function MainNav({ years, specialties, categories }: { years: Year[]; spe
     setOpen(panel);
   };
   const leave = () => {
-    closeTimer.current = window.setTimeout(() => { setOpen(null); setPill((p) => ({ ...p, on: false })); }, 140);
+    closeTimer.current = window.setTimeout(() => { setOpen(null); setPill((p) => ({ ...p, on: false })); }, 160);
   };
 
   const active = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
@@ -50,16 +52,20 @@ export function MainNav({ years, specialties, categories }: { years: Year[]; spe
     { href: "/students", label: "Students", panel: "students" },
     { href: "/dentists", label: "Dentists", panel: "dentists" },
     { href: "/shop", label: "Categories", panel: "categories" },
+    { href: "/offers", label: "Offers", panel: null },
     { href: "/about", label: "About", panel: null },
   ];
 
   return (
     <div className="hidden h-full lg:flex" onMouseLeave={leave}>
-      <div ref={nav} className="relative flex h-full items-center">
+      <div ref={nav} className="nav-pill relative flex h-full items-center">
         <span
           aria-hidden
-          className="absolute top-1/2 h-9 -translate-y-1/2 rounded-full bg-aqua-2 transition-[transform,width,opacity] duration-500 ease-[var(--ease-out-soft)]"
-          style={{ transform: `translate(${pill.x}px, -50%)`, width: pill.w, opacity: pill.on ? 1 : 0, left: 0 }}
+          className={cn(
+            "pointer-events-none absolute left-0 top-0 rounded-full bg-aqua-2 will-change-transform",
+            pill.snap ? "transition-opacity duration-200" : "transition-[transform,width,opacity] duration-[420ms] ease-[var(--ease-out-soft)]",
+          )}
+          style={{ transform: `translate3d(${pill.x}px, ${pill.y}px, 0)`, width: pill.w, height: pill.h, opacity: pill.on ? 1 : 0 }}
         />
         {items.map((it) => (
           <Link
@@ -67,6 +73,13 @@ export function MainNav({ years, specialties, categories }: { years: Year[]; spe
             href={it.href}
             onMouseEnter={enter(it.panel)}
             onFocus={enter(it.panel)}
+            onClick={(e) => {
+              const world = it.href === "/students" ? "students" : it.href === "/dentists" ? "dentists" : null;
+              if (!world || pathname.startsWith(it.href) || e.metaKey || e.ctrlKey || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+              e.preventDefault();
+              setOpen(null);
+              enterWorld(world, it.href);
+            }}
             aria-expanded={it.panel ? open === it.panel : undefined}
             aria-haspopup={it.panel ? "true" : undefined}
             className={cn(
@@ -80,30 +93,26 @@ export function MainNav({ years, specialties, categories }: { years: Year[]; spe
         ))}
       </div>
 
-      <AnimatePresence>
+      <>
         {open && (
-          <motion.div
+          <div data-enter
             key="mega"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-x-0 top-full border-y border-line bg-white/95 shadow-[0_40px_80px_-40px_rgb(2_42_82/0.35)] backdrop-blur-xl"
+            className="absolute inset-x-0 top-full border-y border-line bg-white shadow-[0_40px_80px_-40px_rgb(2_42_82/0.35)] will-change-transform"
             onMouseEnter={() => window.clearTimeout(closeTimer.current)}
             onMouseLeave={leave}
           >
             <div className="container-x py-9">
-              <AnimatePresence mode="wait">
-                <motion.div key={open} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.22 }}>
+              <>
+                <div data-enter key={open}>
                   {open === "students" && <StudentsPanel years={years} />}
                   {open === "dentists" && <DentistsPanel specialties={specialties} categories={categories} />}
                   {open === "categories" && <CategoriesPanel categories={categories} />}
-                </motion.div>
-              </AnimatePresence>
+                </div>
+              </>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
+      </>
     </div>
   );
 }
@@ -136,6 +145,7 @@ function StudentsPanel({ years }: { years: Year[] }) {
           All student essentials <ArrowUpRight className="size-4 transition-transform group-hover/l:-translate-y-0.5 group-hover/l:translate-x-0.5" />
         </Link>
         <Link href="/bundles" className="text-ink/75 hover:text-navy-deep">Ready-made kits</Link>
+        <Link href="/clinic-setup?for=student" className="text-ink/75 hover:text-navy-deep">Set up your clinic</Link>
         <Link href="/shop?audience=student" className="text-ink/75 hover:text-navy-deep">Shop all student products</Link>
         <p className="mt-auto text-sm leading-relaxed text-muted">Every year comes with its own checklist — tick it off as you shop.</p>
       </div>
@@ -180,6 +190,7 @@ function DentistsPanel({ specialties, categories }: { specialties: Item[]; categ
         <Link href="/dentists" className="group/l flex items-center justify-between text-lg font-semibold text-navy-deep">
           Professional supplies <ArrowUpRight className="size-4 transition-transform group-hover/l:-translate-y-0.5 group-hover/l:translate-x-0.5" />
         </Link>
+        <Link href="/clinic-setup?for=dentist" className="text-ink/75 hover:text-navy-deep">Clinic setup packages</Link>
         <Link href="/shop?audience=dentist" className="text-ink/75 hover:text-navy-deep">Shop all clinic products</Link>
         <Link href="/categories/equipment" className="text-ink/75 hover:text-navy-deep">Equipment</Link>
       </div>

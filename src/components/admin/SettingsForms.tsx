@@ -20,11 +20,11 @@ function useSaver(key: string) {
 
 const SaveBtn = ({ pending }: { pending: boolean }) => <button className="btn btn-primary btn-sm w-fit" disabled={pending}>{pending ? "Saving…" : "Save"}</button>;
 
-export function HeroForm({ value }: { value: { title_en?: string; title_ar?: string; subtitle_en?: string; subtitle_ar?: string; student_image?: string | null; dentist_image?: string | null } }) {
-  const [v, setV] = useState({ title_en: "", title_ar: "", subtitle_en: "", subtitle_ar: "", student_image: null as string | null, dentist_image: null as string | null, ...value });
+export function HeroForm({ value }: { value: { title_en?: string; title_ar?: string; subtitle_en?: string; subtitle_ar?: string; student_image?: string | null; dentist_image?: string | null; happy_clients?: number | null; rating?: number | null } }) {
+  const [v, setV] = useState({ title_en: "", title_ar: "", subtitle_en: "", subtitle_ar: "", student_image: null as string | null, dentist_image: null as string | null, happy_clients: null as number | null, rating: null as number | null, ...value });
   const { pending, save } = useSaver("home_hero");
   return (
-    <Card title="Homepage hero & audience cards">
+    <Card title="Homepage hero & the two world doors">
       <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); save(v); }}>
         <Field label="Headline (English)"><input className="field" value={v.title_en} onChange={(e) => setV({ ...v, title_en: e.target.value })} /></Field>
         <Field label="Headline (Arabic)"><input className="field" dir="rtl" value={v.title_ar} onChange={(e) => setV({ ...v, title_ar: e.target.value })} /></Field>
@@ -32,7 +32,13 @@ export function HeroForm({ value }: { value: { title_en?: string; title_ar?: str
         <Field label="Supporting text (Arabic)"><textarea className="field min-h-20" dir="rtl" value={v.subtitle_ar} onChange={(e) => setV({ ...v, subtitle_ar: e.target.value })} /></Field>
         <Field label="“For dental students” card photo" help="Optional. Without a photo, the card shows products assigned to students."><ImageInput value={v.student_image} onChange={(x) => setV({ ...v, student_image: x })} folder="content" /></Field>
         <Field label="“For dentists” card photo" help="Optional. Without a photo, the card shows equipment products."><ImageInput value={v.dentist_image} onChange={(x) => setV({ ...v, dentist_image: x })} folder="content" /></Field>
-        <p className="text-xs text-muted sm:col-span-2">The storefront is English-only: the English headline and text are shown. The last word of the headline is set in the italic accent (e.g. “Precision Starts <em>Here.</em>”). The 3D tooth and instruments beside it are built in.</p>
+        <Field label="Happy clients" help="Shown under the hero as “5,000+ happy clients”. Leave empty to hide.">
+          <input className="field" type="number" min={0} inputMode="numeric" value={v.happy_clients ?? ""} onChange={(e) => setV({ ...v, happy_clients: e.target.value === "" ? null : Number(e.target.value) })} />
+        </Field>
+        <Field label="Average rating (1–5)" help="Shown as stars next to the clients count, e.g. 4.9. Leave empty to hide.">
+          <input className="field" type="number" min={1} max={5} step={0.1} inputMode="decimal" value={v.rating ?? ""} onChange={(e) => setV({ ...v, rating: e.target.value === "" ? null : Number(e.target.value) })} />
+        </Field>
+        <p className="text-xs text-muted sm:col-span-2">The storefront is English-only: the English headline and text are shown. The last word of the headline is set in the italic accent (e.g. “Precision Starts <em>Here.</em>”). The photos behind it rotate — add them under Banners → “Homepage hero slideshow”. The student/dentist photos are used on the two “Choose your world” doors.</p>
         <SaveBtn pending={pending} />
       </form>
     </Card>
@@ -56,8 +62,8 @@ export function AnnouncementForm({ value }: { value: { enabled: boolean; text_en
 }
 
 const SECTIONS: [string, string][] = [
-  ["years", "Shop by academic year"], ["bundles", "Student kits"], ["categories", "Professional categories"], ["best_sellers", "Best sellers"],
-  ["brands", "Brands"], ["new_arrivals", "New arrivals"], ["why", "Why EDS"], ["promo", "Promotional banner"], ["testimonials", "Testimonials"], ["contact", "Contact block"],
+  ["categories", "Category carousel"], ["sale", "On sale band"], ["brands", "Brands strip"], ["testimonials", "Customer feedback"],
+  ["why", "Why EDS"], ["promo", "Promotional banner"], ["contact", "Contact block"], ["map", "Store branches map"],
 ];
 
 export function SectionsForm({ value }: { value: Record<string, boolean> }) {

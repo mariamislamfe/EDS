@@ -1,10 +1,9 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import type { CatalogProduct } from "@/lib/types";
 import { useI18n } from "@/lib/i18n/client";
-import { gsap, prefersReduced } from "@/lib/gsap";
 import { ProductCard } from "@/components/commerce/ProductCard";
 import { cn } from "@/lib/utils";
 
@@ -18,29 +17,23 @@ export function Discovery({ tabs }: { tabs: DiscoveryTab[] }) {
   const bar = useRef<HTMLDivElement>(null);
   const grid = useRef<HTMLUListElement>(null);
   const [pill, setPill] = useState({ x: 0, w: 0 });
-  const first = useRef(true);
 
   useLayoutEffect(() => {
     const btn = bar.current?.querySelector<HTMLElement>(`[data-tab="${active}"]`);
     if (btn) setPill({ x: btn.offsetLeft, w: btn.offsetWidth });
   }, [active]);
 
-  useEffect(() => {
-    if (first.current) { first.current = false; return; }
-    if (!grid.current || prefersReduced()) return;
-    gsap.fromTo(grid.current.children, { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.45, stagger: 0.03, ease: "power3.out" });
-  }, [active]);
 
   if (!list.length) return null;
   const tab = list.find((x) => x.id === active) ?? list[0];
-  const items = tab.products.slice(0, 8);
+  const items = tab.products.slice(0, 4); // one row on desktop, 2×2 on phones
 
   return (
-    <section className="container-x py-16 sm:py-24 lg:py-32" aria-labelledby="disc-title">
-      <div className="mb-12 flex flex-wrap items-end justify-between gap-8">
+    <section className="container-x py-10 sm:py-14" aria-labelledby="disc-title">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="eyebrow mb-3">The catalogue</p>
-          <h2 id="disc-title" className="display text-[clamp(2.4rem,5vw,4.6rem)] leading-[0.92]">
+          <h2 id="disc-title" className="display text-[clamp(1.9rem,3.6vw,3rem)] leading-[0.95]">
             Discover <span className="font-serif font-normal italic text-teal-strong">what&apos;s on the tray.</span>
           </h2>
         </div>
@@ -58,14 +51,14 @@ export function Discovery({ tabs }: { tabs: DiscoveryTab[] }) {
         </div>
       </div>
 
-      <ul ref={grid} className="grid grid-cols-2 gap-x-3 gap-y-8 sm:gap-x-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6 lg:gap-y-12" role="tabpanel">
-        {items.map((p, i) => (
-          <li key={p.id}><ProductCard product={p} locale="en" t={t} priority={i < 2} /></li>
+      <ul key={tab.id} ref={grid} className="tab-swap grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-4 md:grid-cols-4 lg:gap-x-6" role="tabpanel">
+        {items.map((p) => (
+          <li key={p.id}><ProductCard product={p} locale="en" t={t} /></li>
         ))}
       </ul>
 
-      <div className="mt-14 flex justify-center">
-        <Link href={tab.href} className="btn btn-ghost btn-lg" data-magnetic>
+      <div className="mt-6 flex justify-center">
+        <Link href={tab.href} className="btn btn-ghost" data-magnetic>
           See all {tab.label.toLowerCase()} <ArrowUpRight className="size-4" />
         </Link>
       </div>

@@ -17,7 +17,7 @@ export default async function NewBundle() {
         years={(years ?? []).map((y) => ({ value: y.id, label: y.name_en }))}
         items={[]}
         initial={{ id: null, slug: "", name_en: "", name_ar: "", description_en: "", description_ar: "", year_id: null, image_url: null, gallery: [],
-          pricing_mode: "fixed", price: null, compare_at_price: null, discount_percent: 0, is_published: false, is_featured: false, sort_order: 0 }}
+          pricing_mode: "fixed", price: null, compare_at_price: null, discount_percent: 0, is_published: false, is_featured: false, sort_order: 0, kind: "kit", audience: "student" }}
       />
     </>
   );

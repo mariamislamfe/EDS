@@ -14,7 +14,7 @@ export default async function EditBundle({ params }: { params: Promise<{ id: str
   await requireStaffPage();
   type B = { id: string; slug: string; name_en: string; name_ar: string | null; description_en: string | null; description_ar: string | null; year_id: string | null;
     image_url: string | null; gallery: string[] | null; pricing_mode: "fixed" | "sum_of_items"; price: number | null; compare_at_price: number | null;
-    discount_percent: number; is_published: boolean; is_featured: boolean; sort_order: number };
+    discount_percent: number; is_published: boolean; is_featured: boolean; sort_order: number; kind: "kit" | "clinic_setup"; audience: "student" | "dentist" | "both" | "unassigned" };
   const [b, items, years] = await Promise.all([
     one<B>(`select * from bundles where id = $1`, [id]),
     q<{ product_id: string; variant_id: string | null; quantity: number; name: string; price: number; image: string | null;
@@ -43,7 +43,8 @@ export default async function EditBundle({ params }: { params: Promise<{ id: str
         initial={{ id: b.id, slug: b.slug, name_en: b.name_en, name_ar: b.name_ar, description_en: b.description_en, description_ar: b.description_ar,
           year_id: b.year_id, image_url: b.image_url, gallery: b.gallery ?? [], pricing_mode: b.pricing_mode,
           price: b.price == null ? null : Number(b.price), compare_at_price: b.compare_at_price == null ? null : Number(b.compare_at_price),
-          discount_percent: Number(b.discount_percent), is_published: b.is_published, is_featured: b.is_featured, sort_order: b.sort_order }}
+          discount_percent: Number(b.discount_percent), is_published: b.is_published, is_featured: b.is_featured, sort_order: b.sort_order,
+          kind: b.kind, audience: b.audience === "unassigned" ? "student" : b.audience }}
       />
     </>
   );

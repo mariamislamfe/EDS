@@ -62,6 +62,12 @@ export interface CartLine {
 const cartStore = createStore<CartLine[]>("eds_cart_v1", []);
 const EMPTY: CartLine[] = [];
 
+const noopSubscribe = () => () => {};
+/** false on the server and during hydration, true after: localStorage-backed UI waits for it. */
+export function useHydrated() {
+  return useSyncExternalStore(noopSubscribe, () => true, () => false);
+}
+
 export function useCart() {
   return useSyncExternalStore(cartStore.subscribe, cartStore.get, () => EMPTY);
 }

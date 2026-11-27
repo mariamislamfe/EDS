@@ -117,6 +117,8 @@ export interface CatalogBundle {
   item_count: number;
   is_published: boolean;
   is_featured: boolean;
+  kind: "kit" | "clinic_setup";
+  audience: Audience;
 }
 
 export interface BundleItem {
@@ -132,6 +134,7 @@ export interface BrowseFilters {
   brand?: string;
   year?: string;
   specialty?: string;
+  subject?: string;
   audience?: "student" | "dentist";
   min_price?: string;
   max_price?: string;

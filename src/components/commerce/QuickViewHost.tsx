@@ -2,7 +2,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { quickView } from "@/app/actions";
 import type { ProductDetail } from "@/lib/types";
@@ -59,18 +58,14 @@ export function QuickViewHost() {
   }, [slug, onCartAdded]);
 
   return (
-    <AnimatePresence>
+    <>
       {slug && (
-        <motion.div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <div data-enter className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center sm:p-6">
           <div className="absolute inset-0 bg-navy-deep/45 backdrop-blur-[2px]" onClick={close} aria-hidden />
-          <motion.div
+          <div data-enter
             role="dialog"
             aria-modal="true"
             aria-label={t.common.quickView}
-            initial={{ y: 40, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 30, opacity: 0 }}
-            transition={{ type: "spring", damping: 30, stiffness: 320 }}
             className="relative grid max-h-[92dvh] w-full max-w-4xl overflow-y-auto rounded-t-3xl bg-white sm:rounded-3xl md:grid-cols-2"
           >
             <button ref={closeRef} onClick={close} className="absolute end-3 top-3 z-10 grid size-10 place-items-center rounded-full bg-white/90 text-navy" aria-label={t.nav.close}>
@@ -100,9 +95,9 @@ export function QuickViewHost() {
                 </div>
               </>
             )}
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

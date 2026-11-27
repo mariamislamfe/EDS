@@ -3,10 +3,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { suggest } from "@/app/actions";
-import type { CatalogProduct } from "@/lib/types";
+import { useSuggest } from "./useSuggest";
 import { formatPrice, pick } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -14,11 +12,8 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   const { t, locale } = useI18n();
   const router = useRouter();
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<CatalogProduct[]>([]);
-  const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const seq = useRef(0);
 
   useEffect(() => {
     if (!open) return;
@@ -28,21 +23,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
     return () => document.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  useEffect(() => {
-    const query = q.trim();
-    if (query.length < 2) { setItems([]); setLoading(false); return; }
-    const id = ++seq.current;
-    setLoading(true);
-    const timer = setTimeout(async () => {
-      try {
-        const r = await suggest(query);
-        if (id === seq.current) { setItems(r); setActive(-1); }
-      } finally {
-        if (id === seq.current) setLoading(false);
-      }
-    }, 180);
-    return () => clearTimeout(timer);
-  }, [q]);
+  const { items, loading } = useSuggest(q);
 
   const go = (href: string) => { onClose(); router.push(href); };
   const submit = () => {
@@ -51,13 +32,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   };
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
-        <motion.div className="fixed inset-0 z-[65]" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+        <div data-enter className="fixed inset-0 z-[65]">
           <div className="absolute inset-0 bg-navy-deep/40" onClick={onClose} aria-hidden />
-          <motion.div
+          <div data-enter
             role="dialog" aria-modal="true" aria-label={t.search.title}
-            initial={{ y: -16 }} animate={{ y: 0 }} exit={{ y: -16 }}
             className="relative mx-auto max-h-[85dvh] w-full max-w-2xl overflow-hidden bg-white shadow-2xl sm:mt-16 sm:rounded-3xl"
           >
             <form onSubmit={(e) => { e.preventDefault(); submit(); }} className="flex items-center gap-3 border-b border-line px-5">
@@ -65,7 +45,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
               <input
                 ref={inputRef}
                 value={q}
-                onChange={(e) => setQ(e.target.value)}
+                onChange={(e) => { setQ(e.target.value); setActive(-1); }}
                 onKeyDown={(e) => {
                   if (e.key === "ArrowDown") { e.preventDefault(); setActive((a) => Math.min(a + 1, items.length - 1)); }
                   if (e.key === "ArrowUp") { e.preventDefault(); setActive((a) => Math.max(a - 1, -1)); }
@@ -115,9 +95,9 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 </ul>
               )}
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

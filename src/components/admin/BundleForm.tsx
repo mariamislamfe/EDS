@@ -55,6 +55,19 @@ export function BundleForm({ initial, items: initialItems, years }: {
             <Field label="Name (English)"><input className="field" dir="ltr" required value={b.name_en} onChange={(e) => { set("name_en", e.target.value); if (!slugTouched) set("slug", slugify(e.target.value)); }} /></Field>
             <Field label="Name (Arabic)"><input className="field" dir="rtl" value={b.name_ar ?? ""} onChange={(e) => set("name_ar", e.target.value)} /></Field>
             <Field label="URL slug" help={`/bundles/${b.slug || "…"}`}><input className="field" dir="ltr" value={b.slug} onChange={(e) => { setSlugTouched(true); set("slug", e.target.value); }} /></Field>
+            <Field label="Type" help="Clinic setups appear on the Clinic setup page and in the Students/Dentists sections.">
+              <select className="field" value={b.kind} onChange={(e) => set("kind", e.target.value as BundleFormData["kind"])}>
+                <option value="kit">Student kit</option>
+                <option value="clinic_setup">Clinic setup package</option>
+              </select>
+            </Field>
+            <Field label="For">
+              <select className="field" value={b.audience} onChange={(e) => set("audience", e.target.value as BundleFormData["audience"])}>
+                <option value="student">Students</option>
+                <option value="dentist">Dentists</option>
+                <option value="both">Both</option>
+              </select>
+            </Field>
             <Field label="Academic year">
               <select className="field" value={b.year_id ?? ""} onChange={(e) => set("year_id", e.target.value || null)}>
                 <option value="">Not tied to a year</option>

@@ -4,7 +4,7 @@ Bilingual (Arabic RTL / English) dental-supplies store with two shopping journey
 
 Stack: Next.js 16 (App Router, server components) · TypeScript · Tailwind CSS 4 · Motion · Neon (Postgres, Object Storage).
 
-There are **no customer accounts**: shoppers just enter their name, phone and address at checkout (remembered on their device for next time) and can look an order up at `/track` with the order number + mobile.
+**Customer accounts** (mobile number + password): at checkout a guest can tick “Create an account” and choose a password; signed-in customers see every order and its status at `/account`. Guests can still order without an account and look an order up at `/track` with the order number + mobile. Forgotten passwords are reset by the store (no SMS provider is connected).
 
 ---
 
@@ -45,13 +45,28 @@ The product editor shows a live **"Where this product appears"** panel with warn
 - 20 products have no images, 228 have no description, 1 has a SKU. 7 descriptions that were staff price notes were moved to the internal *admin notes* field.
 - "Package Level 1" is a product in the CSV; recreate it as a **bundle** under Admin → Bundles.
 
-## 4. Payments
+## 4. What's managed from the dashboard (v2)
+
+| Where | What |
+|---|---|
+| Website content → Banners → “Homepage hero slideshow” | Photos that cross-fade behind the hero headline (text stays the same) |
+| Website content → Hero | Headline, text, and the photos on the Students / Dentists “doors” |
+| Website content → Customer feedback | Feedback photos/screenshots, shown in identical 4:5 frames under the brands strip |
+| Website content → Store branches | Pins on the homepage map (lat/lng + Google Maps link) — seeded with Damietta and Kafr El Sheikh at approximate positions: **set the exact coordinates** |
+| Website content → Homepage sections | Turn each homepage section on/off |
+| Academic years → a year → Subjects | Split a year into subjects; then tick subjects in each product's editor |
+| Bundles → Type “Clinic setup package”, For students/dentists | Packages shown on `/clinic-setup` and in the Students/Dentists clinic sections |
+| Products → Related products | Shown on both products as “Use it together” |
+
+**Kit assistant** (“Check my list” button): a student pastes or photographs their university list; Claude (`claude-opus-5-5`) searches the live catalogue and lists what's in stock, the variants and the differences between options. Needs `ANTHROPIC_API_KEY` (see `.env.example`); limited to 15 requests per 10 minutes per visitor.
+
+## 5. Payments
 
 Checkout supports the methods enabled in **Store settings → Payment methods**: cash on delivery (on by default), InstaPay and mobile-wallet transfers (off until you add your transfer instructions). These are manual: the customer pays, you mark the order *paid*.
 
 **Online card payments are not implemented** — that needs a provider account (e.g. Paymob, Fawry, Kashier). To add one: create a `payment_methods` entry, create the provider's payment intent in a server action after `place_order`, and confirm it in a webhook route (`src/app/api/payments/<provider>/route.ts`) that sets `payment_status = 'paid'` with the service role. Never trust a client-side "success" redirect.
 
-## 5. Architecture
+## 6. Architecture
 
 ```
 db/migrations/           schema · pricing/order functions · seed · browse/search
@@ -67,7 +82,7 @@ src/lib/admin/           dashboard password/session, server actions, entity conf
 - **Performance**: server components, one RPC per listing page (`browse_products`: filters + sort + pagination + facets), trigram search index, cached catalog reads, `next/image` (AVIF/WebP, responsive sizes), CSS-driven reveals, ~115 kB first-load JS on storefront pages.
 - **Old URLs**: `/ar/product/all/<handle>` from the previous store 301-redirects to the new product page.
 
-## 6. Scripts
+## 7. Scripts
 
 | Command | |
 |---|---|

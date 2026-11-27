@@ -82,6 +82,18 @@ export const getRelatedProducts = cached("related", async (productId: string, ca
   );
 });
 
+/** Products linked in the dashboard (“Related products”), in both directions: items that are used together. */
+export const getPairedProducts = cached("paired", async (productId: string): Promise<CatalogProduct[]> =>
+  q<CatalogProduct>(
+    `with pairs as (
+       select related_id as id, sort_order from related_products where product_id = $1
+       union
+       select product_id as id, 1000 + sort_order from related_products where related_id = $1
+     )
+     select ${LIST_COLUMNS.split(", ").map((c) => `c.${c}`).join(", ")}
+       from (select id, min(sort_order) as rank from pairs group by id) p join catalog_products c on c.id = p.id
+      where c.is_published order by p.rank limit 12`, [productId]));
+
 // ---------------- taxonomy ----------------
 export const getYears = cached("years", async (): Promise<AcademicYear[]> =>
   q<AcademicYear>(`select * from academic_years where is_enabled order by sort_order, number`));
@@ -108,13 +120,28 @@ export const getTaxonomyCounts = cached("tax-counts", async () => {
 });
 
 // ---------------- bundles ----------------
-export const getBundles = cached("bundles", async (opts: { yearSlug?: string; featured?: boolean } = {}): Promise<CatalogBundle[]> =>
+export const getBundles = cached("bundles", async (opts: { yearSlug?: string; featured?: boolean; kind?: "kit" | "clinic_setup"; audience?: "student" | "dentist" } = {}): Promise<CatalogBundle[]> =>
   q<CatalogBundle>(
     `select * from catalog_bundles
       where is_published and ($1::text is null or year_slug = $1) and (not $2 or is_featured)
+        and kind = coalesce($3, kind) and ($4::text is null or audience::text = $4 or audience = 'both')
       order by year_number nulls last, sort_order`,
-    [opts.yearSlug ?? null, Boolean(opts.featured)],
+    [opts.yearSlug ?? null, Boolean(opts.featured), opts.kind ?? null, opts.audience ?? null],
   ));
+
+export type YearSubject = { id: string; year_id: string; slug: string; name_en: string; name_ar: string | null; description_en: string | null; image_url: string | null; products: number; covers: string[] };
+export const getYearSubjects = cached("subjects", async (yearId: string): Promise<YearSubject[]> =>
+  q<YearSubject>(
+    `select s.id, s.year_id, s.slug, s.name_en, s.name_ar, s.description_en, s.image_url,
+            (select count(*) from product_subjects ps join products p on p.id = ps.product_id and p.is_published where ps.subject_id = s.id) as products,
+            array(select pi.url from product_subjects ps join products p on p.id = ps.product_id and p.is_published
+                  join lateral (select url from product_images i where i.product_id = p.id order by sort_order limit 1) pi on true
+                  where ps.subject_id = s.id order by p.is_featured desc, p.sales_count desc limit 3) as covers
+       from year_subjects s where s.year_id = $1 order by s.sort_order`, [yearId]));
+
+export type StoreLocation = { id: string; name_en: string; name_ar: string | null; address_en: string | null; phone: string | null; hours_en: string | null; lat: number; lng: number; maps_url: string | null; image_url: string | null };
+export const getStoreLocations = cached("locations", async (): Promise<StoreLocation[]> =>
+  q<StoreLocation>(`select id, name_en, name_ar, address_en, phone, hours_en, lat, lng, maps_url, image_url from store_locations where is_visible order by sort_order`));
 
 export const getBundle = cache(cached("bundle", async (slug: string) => {
   const b = await one<CatalogBundle>(`select * from catalog_bundles where slug = $1 and is_published`, [slug]);
@@ -149,7 +176,7 @@ export const getSettings = cached("settings", async () => {
     paymentMethods: ((map.payment_methods ?? []) as PaymentMethod[]),
     homeSections: (map.home_sections ?? {}) as Record<string, boolean>,
     metaPixel: (map.meta_pixel ?? { ids: [] }) as { ids: string[] },
-    homeHero: (map.home_hero ?? {}) as { title_en?: string; title_ar?: string; subtitle_en?: string; subtitle_ar?: string; student_image?: string | null; dentist_image?: string | null },
+    homeHero: (map.home_hero ?? {}) as { title_en?: string; title_ar?: string; subtitle_en?: string; subtitle_ar?: string; student_image?: string | null; dentist_image?: string | null; happy_clients?: number | null; rating?: number | null },
   };
 });
 
@@ -159,9 +186,9 @@ export const getBanners = cached("banners", async (placement: string): Promise<B
         and (starts_at is null or starts_at <= now()) and (ends_at is null or ends_at > now())
       order by sort_order`, [placement]));
 
-export const getTestimonials = cached("testimonials", async () =>
-  q<{ id: string; author: string; role_en: string | null; role_ar: string | null; quote: string }>(
-    `select id, author, role_en, role_ar, quote from testimonials where is_visible order by sort_order`));
+export type Feedback = { id: string; author: string | null; role_en: string | null; role_ar: string | null; quote: string | null; image_url: string | null };
+export const getTestimonials = cached("testimonials", async (): Promise<Feedback[]> =>
+  q<Feedback>(`select id, author, role_en, role_ar, quote, image_url from testimonials where is_visible order by sort_order`));
 
 export const getGovernorates = cached("governorates", async () =>
   q<{ id: string; name_en: string; name_ar: string; shipping_fee: number | null }>(

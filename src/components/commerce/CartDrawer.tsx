@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { ShoppingBag, X } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { formatPrice } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
@@ -19,7 +18,6 @@ export function CartDrawer() {
   const [open, setOpen] = useState(false);
   const { quote, loading, lineFor } = useQuote(lines, { enabled: open });
   const closeRef = useRef<HTMLButtonElement>(null);
-  const rtl = locale === "ar";
 
   useEffect(() => {
     const show = () => setOpen(true);
@@ -42,19 +40,15 @@ export function CartDrawer() {
   const hasErrors = quote?.lines.some((l) => !l.ok);
 
   return (
-    <AnimatePresence>
+    <>
       {open && (
         <div className="fixed inset-0 z-[60]">
-          <motion.div className="absolute inset-0 bg-navy-deep/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={close} aria-hidden />
-          <motion.aside
+          <div className="menu-scrim absolute inset-0 bg-navy-deep/40" onClick={close} aria-hidden />
+          <aside
             role="dialog"
             aria-modal="true"
             aria-label={t.cart.title}
-            initial={{ x: rtl ? "-100%" : "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: rtl ? "-100%" : "100%" }}
-            transition={{ type: "spring", damping: 34, stiffness: 340 }}
-            className="absolute inset-y-0 end-0 flex w-full max-w-md flex-col bg-white shadow-2xl"
+            className="drawer-end absolute inset-y-0 end-0 flex w-full max-w-md flex-col bg-white shadow-2xl"
           >
             <header className="flex items-center justify-between border-b border-line px-5 py-4">
               <h2 className="text-lg font-semibold">{t.cart.title}</h2>
@@ -95,9 +89,9 @@ export function CartDrawer() {
                 </footer>
               </>
             )}
-          </motion.aside>
+          </aside>
         </div>
       )}
-    </AnimatePresence>
+    </>
   );
 }

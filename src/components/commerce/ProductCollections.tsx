@@ -5,7 +5,7 @@ import { SectionHead } from "@/components/ui/Section";
 import { ProductCard } from "./ProductCard";
 import { cn } from "@/lib/utils";
 
-export function ProductGrid({ products, locale, t, className, priorityCount = 4 }: {
+export function ProductGrid({ products, locale, t, className, priorityCount = 2 }: {
   products: CatalogProduct[]; locale: Locale; t: Dictionary; className?: string; priorityCount?: number;
 }) {
   return (

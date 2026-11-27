@@ -1,72 +1,66 @@
 "use client";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
-import { gsap, prefersReduced, ScrollTrigger } from "@/lib/gsap";
 
 /**
- * Declarative scroll choreography for server-rendered sections:
+ * Declarative one-shot reveals for server-rendered sections:
  *   data-split            words (rendered by <Words>) rise from a mask on enter
- *   data-rise             element rises in on enter (data-rise="0.1" = delay)
+ *   data-rise             element rises in on enter (data-rise="0.1" = delay, seconds)
  *   data-stagger          direct children rise in sequence
- * Light, one-shot reveals only: nothing is tied to the scroll position, the
- * cursor is the system cursor, and buttons/cards don't follow the pointer.
+ * IntersectionObserver + the Web Animations API (fill: forwards): no animation
+ * library, nothing tied to scroll position, and React's attributes are never
+ * touched. The hidden first-paint state lives in globals.css behind `.js`.
  */
-/** Rendered at the end of a page: tells <MotionLayer> that the page has hydrated. */
+const EASE = "cubic-bezier(0.16, 1, 0.3, 1)";
+
+/** Kept for pages that still render it; reveals no longer wait for it. */
 export function MotionReady() {
-  const pathname = usePathname();
-  useEffect(() => {
-    (window as Window & { __edsMotionReady?: string }).__edsMotionReady = pathname;
-    window.dispatchEvent(new Event("eds:motion-scan"));
-  }, [pathname]);
   return null;
+}
+
+function play(el: HTMLElement, instant: boolean) {
+  const t = (ms: number) => (instant ? 0 : ms);
+  if (el.hasAttribute("data-split")) {
+    el.querySelectorAll<HTMLElement>(".w > span").forEach((w, i) =>
+      w.animate([{ transform: "translateY(110%)" }, { transform: "none" }],
+        { duration: t(1000), delay: t(i * 50), easing: EASE, fill: "forwards" }));
+  }
+  if (el.hasAttribute("data-rise")) {
+    el.animate([{ opacity: 0, transform: "translateY(40px)" }, { opacity: 1, transform: "none" }],
+      { duration: t(1000), delay: t((Number(el.dataset.rise) || 0) * 1000), easing: EASE, fill: "forwards" });
+  }
+  if (el.hasAttribute("data-stagger")) {
+    Array.from(el.children).forEach((c, i) =>
+      (c as HTMLElement).animate([{ opacity: 0, transform: "translateY(32px)" }, { opacity: 1, transform: "none" }],
+        { duration: t(850), delay: t(Math.min(i, 10) * 70), easing: EASE, fill: "forwards" }));
+  }
 }
 
 export function MotionLayer() {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (prefersReduced()) return;
-    let ctx: gsap.Context | null = null;
-    const scan = () => {
-    ctx?.revert();
-    ctx = gsap.context(() => {
-      gsap.utils.toArray<HTMLElement>("[data-split]").forEach((el) => {
-        const words = el.querySelectorAll(".w > span");
-        if (!words.length) return;
-        gsap.fromTo(words, { yPercent: 110, y: 0 }, {
-          yPercent: 0, duration: 1.1, ease: "expo.out", stagger: 0.05,
-          onComplete: () => el.querySelectorAll<HTMLElement>(".w").forEach((n) => (n.style.overflow = "visible")),
-          scrollTrigger: { trigger: el, start: "top 88%", once: true },
-        });
-      });
-      gsap.utils.toArray<HTMLElement>("[data-rise]").forEach((el) => {
-        gsap.fromTo(el, { autoAlpha: 0, y: 48 }, {
-          autoAlpha: 1, y: 0, duration: 1.1, delay: Number(el.dataset.rise) || 0,
-          scrollTrigger: { trigger: el, start: "top 90%", once: true },
-        });
-      });
-      gsap.utils.toArray<HTMLElement>("[data-stagger]").forEach((el) => {
-        if (!el.children.length) return;
-        gsap.fromTo(el.children, { autoAlpha: 0, y: 40 }, {
-          autoAlpha: 1, y: 0, duration: 0.9, stagger: 0.07, clearProps: "transform",
-          scrollTrigger: { trigger: el, start: "top 88%", once: true },
-        });
-      });
+    const instant = window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window);
+    const seen = new WeakSet<Element>();
+    const io = instant ? null : new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        play(e.target as HTMLElement, false);
+        io!.unobserve(e.target);
+      }),
+      { rootMargin: "0px 0px -10% 0px", threshold: 0.01 },
+    );
+    const scan = () => document.querySelectorAll<HTMLElement>("[data-split],[data-rise],[data-stagger]").forEach((el) => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      if (io) io.observe(el); else play(el, true);
     });
-    };
-    // Scan only after the page's (streamed) content has hydrated: pages render
-    // <MotionReady/>, which fires this event from its effect.
-    let done = false;
-    const onReady = () => {
-      done = true;
-      scan();
-      window.setTimeout(() => ScrollTrigger.refresh(), 600); // fonts & images settle
-    };
-    window.addEventListener("eds:motion-scan", onReady);
-    if ((window as Window & { __edsMotionReady?: string }).__edsMotionReady === pathname) onReady();
-    // pages without <MotionReady/> still get their effects
-    const fallback = window.setTimeout(() => { if (!done) onReady(); }, 1800);
-    return () => { window.clearTimeout(fallback); window.removeEventListener("eds:motion-scan", onReady); ctx?.revert(); };
+    // WAAPI never touches React's attributes, so scanning before hydration is safe;
+    // the observer picks up sections that stream in later.
+    scan();
+    const mo = new MutationObserver(scan);
+    mo.observe(document.body, { childList: true, subtree: true });
+    return () => { mo.disconnect(); io?.disconnect(); };
   }, [pathname]);
 
   return null;

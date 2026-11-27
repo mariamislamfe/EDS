@@ -62,7 +62,7 @@ export async function Header() {
             </span>
           </Link>
 
-          <nav aria-label="Main" className="ml-8 h-full">
+          <nav aria-label="Main" className="h-full lg:ms-4 xl:ms-8">
             <MainNav years={navYears} specialties={navSpecs} categories={navCats} />
           </nav>
 

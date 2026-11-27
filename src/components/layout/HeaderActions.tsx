@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
-import { Heart, Search, ShoppingBag } from "lucide-react";
+import { Heart, Search, ShoppingBag, UserRound } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "@/lib/i18n/client";
 import { useCart, useWishlist } from "@/lib/store";
 import { openCart } from "@/components/commerce/CartDrawer";
 import { SearchOverlay } from "./SearchOverlay";
+import { HeaderSearch } from "./HeaderSearch";
 
 export function HeaderActions() {
   const { t } = useI18n();
@@ -29,17 +30,17 @@ export function HeaderActions() {
   const iconBtn = "relative grid size-10 place-items-center rounded-full text-navy transition-colors hover:bg-cloud";
   return (
     <div className="ms-auto flex items-center gap-0.5 sm:gap-1">
-      <button type="button" onClick={() => setSearchOpen(true)} className="hidden h-10 w-52 items-center gap-2 rounded-full border border-line bg-white/70 px-4 text-sm text-muted transition-colors hover:border-navy md:flex xl:w-64" data-cursor="link" aria-label={t.nav.search}>
-        <Search className="size-4" />
-        <span className="truncate">{t.nav.searchPlaceholder}</span>
-      </button>
-      <button type="button" onClick={() => setSearchOpen(true)} className={`${iconBtn} md:hidden`} aria-label={t.nav.search}>
+      <HeaderSearch className="hidden w-52 md:block lg:hidden xl:block xl:w-64" />
+      <button type="button" onClick={() => setSearchOpen(true)} className={`${iconBtn} md:hidden lg:grid xl:hidden`} aria-label={t.nav.search} aria-expanded={searchOpen}>
         <Search className="size-5" />
       </button>
 
       <Link href="/wishlist" className={`${iconBtn} hidden sm:grid`} aria-label={t.nav.wishlist} title={t.nav.wishlist}>
         <Heart className="size-5" />
         {saved.length > 0 && <span className="absolute end-1.5 top-1.5 size-2 rounded-full bg-teal" />}
+      </Link>
+      <Link href="/account" className={iconBtn} aria-label="My account" title="My account">
+        <UserRound className="size-5" />
       </Link>
       <button ref={bag} type="button" onClick={openCart} className={iconBtn} aria-label={`${t.nav.cart} (${count})`}>
         <ShoppingBag className="size-5" />

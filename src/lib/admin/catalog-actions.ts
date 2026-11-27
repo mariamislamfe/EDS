@@ -72,6 +72,7 @@ const productSchema = z.object({
   primary_category_id: uuid.nullish().or(z.literal("")).transform((v) => v || null),
   years: z.array(z.object({ year_id: uuid, is_essential: z.boolean() })).max(20),
   specialty_ids: z.array(uuid).max(30),
+  subject_ids: z.array(uuid).max(60).default([]),
   related_ids: z.array(uuid).max(24),
 }).superRefine((p, ctx) => {
   if (!p.name_en && !p.name_ar) ctx.addIssue({ code: "custom", path: ["name_en"], message: "Enter a name in English or Arabic" });
@@ -135,6 +136,12 @@ export async function saveProduct(input: ProductPayload): Promise<ActionResult> 
 
       await c.query(`delete from product_categories where product_id = $1`, [pid]);
       await c.query(`insert into product_categories (product_id, category_id) select $1, unnest($2::uuid[])`, [pid, categoryIds]);
+      await c.query(`delete from product_subjects where product_id = $1`, [pid]);
+      // a subject only counts while its year is assigned
+      if (p.subject_ids.length) await c.query(
+        `insert into product_subjects (product_id, subject_id)
+         select $1, s.id from year_subjects s where s.id = any($2::uuid[]) and s.year_id = any($3::uuid[]) on conflict do nothing`,
+        [pid, p.subject_ids, p.years.map((y) => y.year_id)]);
       await c.query(`delete from product_years where product_id = $1`, [pid]);
       for (const y of p.years)
         await c.query(`insert into product_years (product_id, year_id, is_essential) values ($1, $2, $3)`, [pid, y.year_id, y.is_essential]);
@@ -247,6 +254,8 @@ const bundleSchema = z.object({
   description_en: optText(20000),
   description_ar: optText(20000),
   year_id: uuid.nullish().or(z.literal("")).transform((v) => v || null),
+  kind: z.enum(["kit", "clinic_setup"]).default("kit"),
+  audience: z.enum(["student", "dentist", "both"]).default("student"),
   image_url: z.string().url().nullish().or(z.literal("")).transform((v) => v || null),
   gallery: z.array(z.string().url()).max(12),
   pricing_mode: z.enum(["fixed", "sum_of_items"]),
@@ -277,6 +286,14 @@ const yearSchema = z.object({
   is_enabled: z.boolean(),
   sort_order: z.coerce.number().int().min(-1000).max(1000),
   checklist: z.array(z.object({ label_en: z.string().trim().min(1).max(200), label_ar: optText(200), product_id: uuid.nullish().or(z.literal("")).transform((v) => v || null) })).max(150),
+  subjects: z.array(z.object({
+    id: uuid.nullish().or(z.literal("")).transform((v) => v || null),
+    slug,
+    name_en: z.string().trim().min(1, "Subject name is required").max(120),
+    name_ar: optText(120),
+    description_en: optText(600),
+    image_url: z.string().url().nullish().or(z.literal("")).transform((v) => v || null),
+  })).max(40).default([]),
 });
 export type YearPayload = z.input<typeof yearSchema>;
 export type YearData = z.output<typeof yearSchema>;
@@ -305,6 +322,9 @@ const settingSchemas = {
     title_en: z.string().max(160), title_ar: z.string().max(160), subtitle_en: z.string().max(400), subtitle_ar: z.string().max(400),
     student_image: z.string().url().nullish().or(z.literal("")).transform((v) => v || null),
     dentist_image: z.string().url().nullish().or(z.literal("")).transform((v) => v || null),
+    // social proof under the hero; empty = hidden
+    happy_clients: z.coerce.number().int().min(0).max(10_000_000).nullish().catch(null),
+    rating: z.coerce.number().min(1).max(5).nullish().catch(null),
   }),
 } as const;
 
@@ -342,10 +362,19 @@ export async function saveYear(input: YearPayload): Promise<ActionResult> {
   await requireStaff();
   const parsed = yearSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: firstIssue(parsed.error) };
-  const { id: yid, checklist, ...y } = parsed.data;
+  const { id: yid, checklist, subjects, ...y } = parsed.data;
   try {
     const id = await tx(async (c) => {
       const id = yid ? await updateRow(c, "academic_years", yid, y) : await insertRow(c, "academic_years", y);
+      // subjects are updated in place so their product assignments survive
+      const keep = subjects.map((x) => x.id).filter(Boolean) as string[];
+      await c.query(`delete from year_subjects where year_id = $1 and not (id = any($2::uuid[]))`, [id, keep]);
+      for (const [i, sub] of subjects.entries()) {
+        if (sub.id) await c.query(`update year_subjects set slug = $3, name_en = $4, name_ar = $5, description_en = $6, image_url = $7, sort_order = $8 where id = $1 and year_id = $2`,
+          [sub.id, id, sub.slug, sub.name_en, sub.name_ar, sub.description_en, sub.image_url, i]);
+        else await c.query(`insert into year_subjects (year_id, slug, name_en, name_ar, description_en, image_url, sort_order) values ($1, $2, $3, $4, $5, $6, $7)`,
+          [id, sub.slug, sub.name_en, sub.name_ar, sub.description_en, sub.image_url, i]);
+      }
       await c.query(`delete from year_checklist_items where year_id = $1`, [id]);
       for (const [i, item] of checklist.entries())
         await c.query(`insert into year_checklist_items (year_id, label_en, label_ar, product_id, sort_order) values ($1, $2, $3, $4, $5)`,

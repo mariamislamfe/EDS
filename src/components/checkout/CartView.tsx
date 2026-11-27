@@ -3,15 +3,21 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { formatPrice } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
-import { useCart } from "@/lib/store";
+import { useCart, useHydrated } from "@/lib/store";
 import { CartLineItem } from "@/components/commerce/CartLineItem";
 import { useQuote } from "@/components/commerce/useQuote";
 
 export function CartView() {
   const { t, locale } = useI18n();
   const lines = useCart();
+  const hydrated = useHydrated();
   const { quote, loading, lineFor } = useQuote(lines);
   const hasErrors = quote?.lines.some((l) => !l.ok);
+
+  if (!hydrated) {
+    // the cart lives in this browser: hold its space until it is read (no "empty" flash, no layout jump)
+    return <div className="grid gap-4" aria-busy="true"><div className="skeleton h-28" /><div className="skeleton h-28" /><div className="skeleton h-64" /></div>;
+  }
 
   if (!lines.length) {
     return (

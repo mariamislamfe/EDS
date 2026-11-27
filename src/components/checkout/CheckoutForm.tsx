@@ -8,7 +8,7 @@ import { placeOrder } from "@/app/actions";
 import type { PaymentMethod } from "@/lib/types";
 import { fmt, formatPrice, pick } from "@/lib/i18n";
 import { useI18n } from "@/lib/i18n/client";
-import { cart, useCart } from "@/lib/store";
+import { cart, useCart, useHydrated } from "@/lib/store";
 import { useQuote } from "@/components/commerce/useQuote";
 import { cn } from "@/lib/utils";
 
@@ -18,13 +18,22 @@ type Gov = { id: string; name_en: string; name_ar: string; shipping_fee: number 
 const DETAILS_KEY = "eds_checkout_details_v1";
 const DETAIL_FIELDS = ["name", "phone", "email", "governorate_id", "city", "address"] as const;
 
-export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
-  governorates: Gov[]; paymentMethods: PaymentMethod[]; emailRequired: boolean;
+export type CheckoutCustomer = { name: string; phone: string; email: string | null; governorate_id: string | null; city: string | null; address: string | null };
+
+export function CheckoutForm({ governorates, paymentMethods, emailRequired, customer }: {
+  governorates: Gov[]; paymentMethods: PaymentMethod[]; emailRequired: boolean; customer: CheckoutCustomer | null;
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const lines = useCart();
-  const [form, setForm] = useState({ name: "", phone: "", email: "", governorate_id: "", city: "", address: "", notes: "" });
+  const hydrated = useHydrated();
+  const [form, setForm] = useState({
+    name: customer?.name ?? "", phone: customer?.phone ?? "", email: customer?.email ?? "",
+    governorate_id: customer?.governorate_id && governorates.some((g) => g.id === customer.governorate_id) ? customer.governorate_id : "",
+    city: customer?.city ?? "", address: customer?.address ?? "", notes: "",
+  });
+  const [makeAccount, setMakeAccount] = useState(true);
+  const [accountPassword, setAccountPassword] = useState("");
   useEffect(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(DETAILS_KEY) ?? "null") as Partial<Record<(typeof DETAIL_FIELDS)[number], string>> | null;
@@ -51,7 +60,12 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
     setForm((f) => ({ ...f, [k]: e.target.value }));
     if (fieldErr === k) setFieldErr(null);
   };
-  const errText = (code: string) => (t.checkout.errors as Record<string, string>)[code] ?? t.checkout.errors.generic;
+  const extraErrors: Record<string, string> = {
+    account_exists: "This mobile number already has an account. Sign in first to save this order to it, or untick “Create an account”.",
+    invalid_password: "Choose a password of at least 6 characters for your account.",
+    rate_limited: "Too many orders from this connection in a few minutes. Please wait a little and try again, or call us.",
+  };
+  const errText = (code: string) => extraErrors[code] ?? (t.checkout.errors as Record<string, string>)[code] ?? t.checkout.errors.generic;
   const couponMsg = quote?.coupon_message
     ? quote.coupon_message.startsWith("min_subtotal:")
       ? fmt(t.cart.couponError_min_subtotal, { n: quote.coupon_message.split(":")[1] })
@@ -66,8 +80,12 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
     trackPixel("InitiateCheckout", { value: quote.total, currency: "EGP", num_items: lines.reduce((n, l) => n + l.qty, 0), content_ids: lines.map((l) => l.id) });
   }, [quote, lines]);
 
+  // synchronous guard: a double click can fire before `pending` re-renders the button as disabled
+  const submitting = useRef(false);
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting.current) return;
+    submitting.current = true;
     setError(null);
     start(async () => {
       const res = await placeOrder({
@@ -75,6 +93,7 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
         payment_method: payment,
         coupon_code: quote?.coupon_valid ? coupon : null,
         customer: { ...form, email: form.email.trim() },
+        create_account_password: !customer && makeAccount ? accountPassword : null,
       });
       if (res.ok) {
         trackPixel("Purchase", { value: quote?.total ?? 0, currency: "EGP", content_ids: lines.map((l) => l.id), content_type: "product", num_items: lines.reduce((n, l) => n + l.qty, 0) }, { eventID: res.number });
@@ -82,13 +101,19 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
         cart.clear();
         router.push(`/order/${res.id}?token=${res.token}`);
       } else {
+        submitting.current = false;
         setError(errText(res.error));
-        const fieldMap: Record<string, string> = { invalid_name: "name", invalid_phone: "phone", invalid_city: "city", invalid_address: "address", invalid_email: "email", invalid_governorate: "governorate_id" };
+        const fieldMap: Record<string, string> = { account_exists: "phone", invalid_password: "account_password", invalid_name: "name", invalid_phone: "phone", invalid_city: "city", invalid_address: "address", invalid_email: "email", invalid_governorate: "governorate_id" };
         setFieldErr(fieldMap[res.error] ?? null);
         if (res.error === "cart_changed") router.refresh();
       }
     });
   };
+
+  if (!hydrated) {
+    // the cart lives in this browser: hold its space until it is read (no "empty" flash, no layout jump)
+    return <div className="grid gap-4" aria-busy="true"><div className="skeleton h-28" /><div className="skeleton h-28" /><div className="skeleton h-64" /></div>;
+  }
 
   if (!lines.length) {
     return (
@@ -116,6 +141,30 @@ export function CheckoutForm({ governorates, paymentMethods, emailRequired }: {
           <div className="sm:col-span-2">{field("name", t.checkout.name, { required: true, autoComplete: "name" })}</div>
           {field("phone", t.checkout.phone, { required: true, type: "tel", autoComplete: "tel", dir: "ltr", inputMode: "tel" })}
           {field("email", t.checkout.email, { required: emailRequired, type: "email", autoComplete: "email", dir: "ltr", inputMode: "email" })}
+          {customer ? (
+            <p className="rounded-2xl bg-aqua px-4 py-3 text-sm text-navy sm:col-span-2">
+              Signed in as <strong>{customer.name}</strong> — this order will be saved to <Link href="/account" className="underline underline-offset-4">your account</Link>.
+            </p>
+          ) : (
+            <div className="rounded-2xl border border-line p-4 sm:col-span-2">
+              <label className="flex cursor-pointer items-start gap-3">
+                <input type="checkbox" checked={makeAccount} onChange={(e) => setMakeAccount(e.target.checked)} className="mt-1 size-4 accent-navy" />
+                <span>
+                  <span className="block font-medium text-navy">Create an account to follow this order</span>
+                  <span className="block text-sm text-muted">See all your orders and their status any time. Already have one? <Link href="/account?next=/checkout" className="text-teal-strong underline underline-offset-4">Sign in</Link></span>
+                </span>
+              </label>
+              {makeAccount && (
+                <div className="mt-4 max-w-sm">
+                  <label htmlFor="f-account_password" className="label">Choose a password</label>
+                  <input id="f-account_password" type="password" className="field" dir="ltr" autoComplete="new-password" minLength={6} required
+                    value={accountPassword} onChange={(e) => { setAccountPassword(e.target.value); if (fieldErr === "account_password") setFieldErr(null); }}
+                    aria-invalid={fieldErr === "account_password"} />
+                  <p className="mt-1 text-xs text-muted">At least 6 characters. You&apos;ll sign in with your mobile number.</p>
+                </div>
+              )}
+            </div>
+          )}
         </fieldset>
 
         <fieldset className="grid gap-4 sm:grid-cols-2">

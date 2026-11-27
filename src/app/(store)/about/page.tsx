@@ -39,7 +39,7 @@ export default async function AboutPage() {
             </p>
           </div>
           <InstrumentStage
-            className="h-[22rem] sm:h-[30rem]"
+            className="hidden h-[30rem] md:block"
             items={[
               { kind: "mirror", x: -2.2, y: 0.2, z: 0.6, rz: 0.5, rx: 0.3, scale: 1.4 },
               { kind: "explorer", x: 0.2, y: 0.0, z: 1.2, rz: -0.3, scale: 1.4 },

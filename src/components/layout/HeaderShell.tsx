@@ -27,9 +27,10 @@ export function HeaderShell({ children }: { children: React.ReactNode }) {
   return (
     <header
       className={cn(
-        "sticky top-0 z-50 transition-[transform,background-color,border-color] duration-500 ease-[var(--ease-out-soft)]",
+        "sticky top-0 z-50 transition-[transform,background-color,border-color,box-shadow] duration-500 ease-[var(--ease-out-soft)] will-change-transform",
         hidden && "-translate-y-full",
-        scrolled ? "border-b border-line/70 bg-white/90 backdrop-blur-md" : "border-b border-transparent bg-white/0",
+        pathname === "/" && !scrolled && "hdr-over",
+        scrolled ? "border-b border-line/70 bg-white/[0.97] shadow-[0_10px_30px_-24px_rgb(2_42_82/0.4)]" : "border-b border-transparent bg-white/0",
       )}
     >
       {children}

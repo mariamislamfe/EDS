@@ -12,6 +12,8 @@ import { CartDrawer } from "@/components/commerce/CartDrawer";
 import { QuickViewHost } from "@/components/commerce/QuickViewHost";
 import { SetupNotice } from "@/components/ui/SetupNotice";
 import { MotionLayer } from "@/components/fx/MotionLayer";
+import { CinematicHost } from "@/components/fx/Cinematic";
+import { AssistantLauncher } from "@/components/assistant/Assistant";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
 import "@/styles/globals.css";
 
@@ -47,6 +49,8 @@ export default async function StoreLayout({ children }: { children: React.ReactN
           <QuickViewHost />
           <RevealObserver />
           <MotionLayer />
+          <CinematicHost />
+          {isConfigured && <AssistantLauncher />}
           {pixelIds.length > 0 && (
             <Suspense fallback={null}>
               <MetaPixel ids={pixelIds} />
