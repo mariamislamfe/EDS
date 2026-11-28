@@ -40,6 +40,12 @@ export default async function HomePage() {
   const heroAccent = split > 0 ? heroTitle.slice(split + 1) : "";
   const heroSub = settings.homeHero.subtitle_en || "Everything you need to create better smiles.";
   // full-bleed photos from Admin → Banners ("Homepage hero slideshow"); a built-in photo otherwise
+  // products floating around the hero headline: discounted first, then best sellers (with photos)
+  const heroSeen = new Set<string>();
+  const heroProducts = [...withImage(sale.items), ...withImage(best.items)]
+    .filter((p) => !heroSeen.has(p.id) && heroSeen.add(p.id))
+    .slice(0, 4)
+    .map((p) => ({ key: p.id, href: `/products/${p.slug}`, image: p.image_url!, title: pick("en", p.name_en, p.name_ar), price: p.price }));
   const heroSlides = slides.filter((b) => b.image_url).slice(0, 5)
     .map((b) => ({ src: b.image_url!, alt: pick("en", b.title_en, b.title_ar) || "EDS" }));
 
@@ -56,7 +62,10 @@ export default async function HomePage() {
     <>
       <HeroBanner lead={heroLead} accent={heroAccent} subtitle={heroSub} slides={heroSlides}
         stats={{ products: facets.total, brands: facets.facets.brands.length, categories: categories.filter((c) => !c.parent_id).length }}
-        proof={{ clients: settings.homeHero.happy_clients ?? null, rating: settings.homeHero.rating ?? null, avatars: feedback.map((f) => f.image_url).filter((x): x is string => Boolean(x)) }} />
+        proof={{ clients: settings.homeHero.happy_clients ?? null, rating: settings.homeHero.rating ?? null, avatars: feedback.map((f) => f.image_url).filter((x): x is string => Boolean(x)) }}
+        products={heroProducts}
+        years={years.map((y) => ({ href: `/students/${y.slug}`, label: pick("en", y.name_en, y.name_ar) }))}
+        specialties={specialties.map((sp) => ({ href: `/dentists/${sp.slug}`, label: pick("en", sp.name_en, sp.name_ar) }))} />
 
       <Worlds
         studentImage={settings.homeHero.student_image ?? null}
