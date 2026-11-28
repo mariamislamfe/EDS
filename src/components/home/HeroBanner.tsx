@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ArrowRight, ArrowUpRight, GraduationCap, Search, Star, Stethoscope } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Search, Star } from "lucide-react";
 import { formatPrice, pick } from "@/lib/i18n";
 import { useSuggest } from "@/components/layout/useSuggest";
 import { cn } from "@/lib/utils";
@@ -13,8 +13,6 @@ export const DEFAULT_HERO = { src: "/hero/eds-hero.webp", alt: "Dental handpiece
 const TYPED = ["K-files", "composite", "burs", "endo motor", "impression trays", "apex locator", "gloves"];
 
 export type HeroSlide = { src: string; alt: string };
-export type HeroProduct = { key: string; href: string; image: string; title: string; price: number };
-type QuickLink = { href: string; label: string };
 
 function Stars({ value }: { value: number }) {
   return (
@@ -54,18 +52,14 @@ function useTypedWord(active: boolean) {
  *  - brand-graded photo; on desktop a teal "flashlight" follows the pointer and
  *    reveals the photo in colour
  *  - search right in the hero (live results while typing, self-typing hint)
- *  - Students / Dentists switch with quick links (years / specialties)
- *  - real products float around the headline with a little pointer parallax
- * Pointer effects write CSS variables directly (no React re-render per move).
+ *  - the two main calls to action
+ * The pointer effect writes CSS variables directly (no React re-render per move).
  */
-export function HeroBanner({ lead, accent, subtitle, slides, stats, proof, products, years, specialties }: {
+export function HeroBanner({ lead, accent, subtitle, slides, stats, proof }: {
   lead: string; accent: string; subtitle: string;
   slides: HeroSlide[];
   stats: { products: number; brands: number; categories: number };
   proof: { clients: number | null; rating: number | null; avatars: string[] };
-  products: HeroProduct[];
-  years: QuickLink[];
-  specialties: QuickLink[];
 }) {
   const list = slides.length ? slides : [DEFAULT_HERO];
   const n = list.length;
@@ -74,7 +68,6 @@ export function HeroBanner({ lead, accent, subtitle, slides, stats, proof, produ
   const [i, setI] = useState(0);
   const [seen, setSeen] = useState<Set<number>>(() => new Set([0, 1 % n]));
   const [paused, setPaused] = useState(false);
-  const [who, setWho] = useState<"students" | "dentists">("students");
   const [q, setQ] = useState("");
   const [focused, setFocused] = useState(false);
   const [active, setActive] = useState(-1);
@@ -138,14 +131,6 @@ export function HeroBanner({ lead, accent, subtitle, slides, stats, proof, produ
 
   const go = (href: string) => { setFocused(false); setQ(""); router.push(href); };
   const words = lead.split(" ").filter(Boolean);
-  const quick = who === "students" ? years : specialties;
-  // floating product cards around the headline (xl screens)
-  const spots = [
-    "left-[3%] top-[24%] [--d:0s] [--depth:26px]",
-    "left-[7%] bottom-[19%] [--d:-2.2s] [--depth:40px]",
-    "right-[3%] top-[22%] [--d:-1.1s] [--depth:34px]",
-    "right-[7%] bottom-[20%] [--d:-3.3s] [--depth:22px]",
-  ];
 
   return (
     <section ref={root} aria-labelledby="hero-title"
@@ -176,27 +161,14 @@ export function HeroBanner({ lead, accent, subtitle, slides, stats, proof, produ
         <div className="absolute inset-x-0 bottom-0 h-2/5 bg-[linear-gradient(0deg,rgb(2_28_56),rgb(2_28_56/0.55)_45%,transparent)]" />
       </div>
 
-      {/* ---------- floating products (xl) ---------- */}
-      {products.slice(0, 4).map((p, k) => (
-        <Link key={p.key} href={p.href} prefetch={false}
-          className={cn("hero-float group absolute z-10 hidden w-[11.5rem] xl:block", spots[k])}>
-          <span className="hero-float-inner flex items-center gap-3 rounded-2xl border border-white/15 bg-white/[0.08] p-2 pe-3 shadow-[0_20px_50px_-20px_rgb(0_0_0/0.6)] backdrop-blur-xl transition-colors group-hover:border-teal/60 group-hover:bg-white/[0.14]">
-            <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-white">
-              <Image src={p.image} alt="" fill sizes="56px" className="object-contain p-1 mix-blend-multiply" />
-            </span>
-            <span className="min-w-0">
-              <span className="line-clamp-2 text-[0.72rem] leading-snug text-white/85">{p.title}</span>
-              <span className="mt-0.5 block text-sm font-semibold text-teal" dir="ltr">{formatPrice(p.price, "en")}</span>
-            </span>
-          </span>
-        </Link>
-      ))}
-
       {/* ---------- copy ---------- */}
       <div className="hero-copy container-x relative z-20 flex min-h-0 flex-1 flex-col items-center justify-center pt-[calc(4rem+2svh)] text-center lg:pt-[calc(4.75rem+1svh)]">
-        <p className="hero-in inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] py-1 pe-3.5 ps-1.5 text-[0.74rem] text-white/85 backdrop-blur-md">
-          <span className="grid size-5 place-items-center rounded-full bg-teal/20"><span className="size-1.5 rounded-full bg-teal" /></span>
-          Al Esraa Dental Store · Egypt
+        <p className="hero-in inline-flex items-center gap-3 rounded-full border border-white/20 bg-white/[0.09] py-2 pe-5 ps-3.5 text-[clamp(0.95rem,2.1svh,1.15rem)] font-medium tracking-[-0.01em] text-white shadow-[0_10px_30px_-15px_rgb(101_194_199/0.6)] backdrop-blur-md">
+          <span className="relative grid size-3 place-items-center" aria-hidden>
+            <span className="absolute inset-0 animate-ping rounded-full bg-teal/70 [animation-duration:2.2s]" />
+            <span className="relative size-2.5 rounded-full bg-teal" />
+          </span>
+          Al Esraa Dental Store
         </p>
         <h1 id="hero-title" className="mt-[2.2svh] max-w-5xl text-[clamp(2.5rem,min(8.2vw,11svh),7.2rem)] font-semibold leading-[0.92] tracking-[-0.055em] text-white">
           <span className="block">
@@ -274,31 +246,15 @@ export function HeroBanner({ lead, accent, subtitle, slides, stats, proof, produ
           )}
         </div>
 
-        {/* who are you? quick links */}
-        <div className="hero-in hero-in-3 mt-[2.4svh] flex w-full max-w-3xl flex-col items-center gap-[1.4svh]">
-          <div role="tablist" aria-label="Shop as" className="relative grid grid-cols-2 rounded-full border border-white/15 bg-white/[0.06] p-1 backdrop-blur-md">
-            <span aria-hidden className={cn("absolute inset-y-1 start-1 w-[calc(50%-0.25rem)] rounded-full bg-teal transition-transform duration-500 ease-[var(--ease-out-soft)]", who === "dentists" && "translate-x-full rtl:-translate-x-full")} />
-            {([["students", "Students", GraduationCap], ["dentists", "Dentists", Stethoscope]] as const).map(([id, label, Icon]) => (
-              <button key={id} type="button" role="tab" aria-selected={who === id} onClick={() => setWho(id)}
-                className={cn("relative z-10 flex min-h-10 items-center justify-center gap-2 rounded-full px-5 text-sm font-medium transition-colors", who === id ? "text-navy-deep" : "text-white/75 hover:text-white")}>
-                <Icon className="size-4" /> {label}
-              </button>
-            ))}
-          </div>
-          <ul key={who} className="tab-swap flex max-w-full flex-wrap justify-center gap-1.5" role="tabpanel">
-            {quick.slice(0, 6).map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="inline-flex min-h-9 items-center rounded-full border border-white/15 bg-white/[0.05] px-3.5 text-[0.8rem] text-white/85 transition-colors hover:border-teal hover:text-teal">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link href={who === "students" ? "/students" : "/dentists"} className="inline-flex min-h-9 items-center gap-1 rounded-full px-3 text-[0.8rem] font-medium text-teal hover:underline">
-                All <ArrowUpRight className="size-3.5" />
-              </Link>
-            </li>
-          </ul>
+        <div className="hero-in hero-in-3 mt-[2.6svh] flex flex-wrap justify-center gap-2.5 sm:gap-3">
+          <Link href="/shop" className="btn group min-h-12 bg-white px-6 text-navy-deep shadow-[0_18px_40px_-18px_rgb(101_194_199/0.9)] hover:bg-teal sm:min-h-[3.25rem] sm:px-8 sm:text-base">
+            Shop all products
+            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-1" />
+          </Link>
+          <Link href="/offers" className="btn group min-h-12 border border-white/25 bg-white/[0.08] px-6 text-white backdrop-blur-md hover:bg-white/15 sm:min-h-[3.25rem] sm:px-8 sm:text-base">
+            Today&apos;s offers
+            <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:rotate-45" />
+          </Link>
         </div>
       </div>
 

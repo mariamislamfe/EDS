@@ -278,11 +278,6 @@
   background: radial-gradient(circle 420px at var(--mx, 50%) var(--my, 50%), rgb(101 194 199 / .16), transparent 70%);
 }
 .hero.lit .hero-glow { opacity: 1; }
-/* floating product cards: idle drift + pointer parallax (separate properties, both composited) */
-.hero-float { translate: calc(var(--px, 0) * var(--depth, 30px) * -1) calc(var(--py, 0) * var(--depth, 30px) * -1); transition: translate .5s cubic-bezier(.22,1,.36,1); }
-.hero-float-inner { animation: hero-drift 7s ease-in-out infinite; animation-delay: var(--d, 0s); }
-@keyframes hero-drift { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-10px) rotate(1deg); } }
-.hero-float { animation: rise .9s var(--ease-out-soft) .6s both; }
 /* typed placeholder caret */
 .hero-caret { animation: caret 1s steps(1) infinite; }
 @keyframes caret { 50% { opacity: 0; } }
@@ -379,5 +374,5 @@
   .js [data-split] .w > span { transform: none; }
   .js [data-rise], .js [data-stagger] > * { opacity: 1; }
   .marquee { animation: none; }
-  .cine-curtain, .cine-title, .menu-panel, .drawer-end, .sheet-up, .hero-word, .hero-bg, .hero-copy, .hero-float-inner, .hero-caret { animation: none !important; }
+  .cine-curtain, .cine-title, .menu-panel, .drawer-end, .sheet-up, .hero-word, .hero-bg, .hero-copy, .hero-caret { animation: none !important; }
 }
