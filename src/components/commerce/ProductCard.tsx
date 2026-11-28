@@ -28,69 +28,69 @@ export function ProductCard({
 
   return (
     <article className={cn(
-      "group relative isolate flex flex-col overflow-hidden rounded-[1.25rem] p-3 transition-shadow duration-300 hover:shadow-[0_18px_40px_-22px_rgb(2_42_82/0.45)] sm:p-3.5",
-      size === "lg" ? "aspect-[3/4] lg:aspect-auto lg:h-full" : "aspect-[3/4]",
+      "group relative isolate overflow-hidden rounded-[1.25rem] ring-1 ring-navy/[0.06] transition-shadow duration-500 hover:shadow-[0_24px_50px_-28px_rgb(2_42_82/0.55)]",
+      size === "lg" ? "aspect-[4/5] lg:aspect-auto lg:h-full" : "aspect-[4/5]",
       dark ? "bg-white" : "product-tile",
       className,
     )}>
       {/* the whole tile opens the product */}
-      <Link href={href} prefetch={false} className="absolute inset-0 -z-10" aria-label={name} tabIndex={-1} />
+      <Link href={href} prefetch={false} className="absolute inset-0 z-0" aria-label={name} tabIndex={-1} />
 
-      {/* details on top */}
-      <div className="pointer-events-none">
-        <div className="min-w-0">
-          {p.brand_name && <p className="truncate font-mono text-[0.6rem] uppercase tracking-[0.14em] text-teal-strong">{p.brand_name}</p>}
-          <h3 className={cn("mt-0.5 font-sans font-medium leading-snug tracking-[-0.01em] text-navy-deep", size === "lg" ? "text-lg" : "text-[0.8rem] sm:text-[0.88rem]")}>
-            <Link href={href} prefetch={false} className="pointer-events-auto line-clamp-2 hover:underline hover:underline-offset-2">{name}</Link>
-          </h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
-            <Price price={p.price} compare={p.compare_at_price} locale={locale} size="sm" fromLabel={p.has_variants ? t.common.from : undefined} />
-            {pct > 0 && <span className="rounded-full bg-navy px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums text-white">−{pct}%</span>}
-          </div>
+      {/* product shot */}
+      <div className="pointer-events-none absolute inset-0 p-[9%] pb-[30%] transition-[padding] duration-500 ease-[var(--ease-out-soft)] md:group-hover:pb-[52%]">
+        <div className="relative size-full">
+          {p.image_url ? (
+            <>
+              <Image src={p.image_url} alt="" fill priority={priority}
+                sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
+                className={cn("cutout object-contain transition-[transform,opacity] duration-700 ease-[var(--ease-out-soft)]", p.image_url_2 && "md:group-hover:opacity-0")} />
+              {p.image_url_2 && (
+                <Image src={p.image_url_2} alt="" aria-hidden fill loading="lazy"
+                  sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
+                  className="cutout hidden object-contain opacity-0 transition-opacity duration-700 md:block md:group-hover:opacity-100" />
+              )}
+            </>
+          ) : (
+            <div className="grid h-full place-items-center">
+              <Image src="/brand/eds-mark.png" alt="" width={48} height={48} className="opacity-25 grayscale" />
+            </div>
+          )}
         </div>
       </div>
 
-      {/* product shot */}
-      <div className="pointer-events-none relative mt-1 min-h-0 flex-1">
-        {p.image_url ? (
-          <>
-            <Image
-              src={p.image_url}
-              alt=""
-              fill
-              priority={priority}
-              sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
-              className={cn(
-                "cutout scale-[1.08] object-contain transition-[transform,opacity] duration-700 ease-[var(--ease-out-soft)] group-hover:scale-[1.14]",
-                p.image_url_2 && "md:group-hover:opacity-0",
-              )}
-            />
-            {p.image_url_2 && (
-              <Image src={p.image_url_2} alt="" aria-hidden fill loading="lazy"
-                sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
-                className="cutout hidden scale-[1.08] object-contain opacity-0 transition-opacity duration-700 md:block md:group-hover:opacity-100" />
-            )}
-          </>
-        ) : (
-          <div className="grid h-full place-items-center">
-            <Image src="/brand/eds-mark.png" alt="" width={48} height={48} className="opacity-25 grayscale" />
-          </div>
-        )}
+      {/* corner badges */}
+      <div className="pointer-events-none absolute inset-x-2.5 top-2.5 z-10 flex items-start justify-between gap-2">
+        <div className="flex flex-col items-start gap-1">
+          {pct > 0 && <span className="rounded-full bg-navy px-2 py-0.5 text-[0.68rem] font-semibold tabular-nums text-white">−{pct}%</span>}
+          {!p.in_stock && <span className="rounded-full bg-white px-2 py-0.5 text-[0.68rem] font-medium text-muted ring-1 ring-line">{t.common.outOfStock}</span>}
+        </div>
+        <div className="pointer-events-auto transition-opacity duration-300 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100">
+          <WishlistButton productId={p.id} />
+        </div>
       </div>
 
-      {/* actions */}
-      <div className="flex items-end justify-between gap-1.5">
-        <span className="pointer-events-auto"><WishlistButton productId={p.id} /></span>
-        {!p.in_stock ? (
-          <span className="me-auto rounded-full bg-white/95 px-2.5 py-1 text-[0.7rem] font-medium text-muted ring-1 ring-line">{t.common.outOfStock}</span>
-        ) : (
-          <span className="hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 md:block">
-            <CardActions product={p} variant="quickview" />
-          </span>
-        )}
-        <span className="ms-auto">
-          <CardActions product={p} variant="mobile" />
-        </span>
+      {/* info glass: a slim strip at rest, half the card on hover */}
+      <div className="absolute inset-x-2 bottom-2 z-10 rounded-[0.95rem] bg-white/80 px-3 py-2.5 shadow-[0_8px_24px_-14px_rgb(2_42_82/0.35)] ring-1 ring-white/70 backdrop-blur-md">
+        <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-500 ease-[var(--ease-out-soft)] md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr]">
+          <div className="overflow-hidden">
+            {p.brand_name && <p className="truncate pb-1 font-mono text-[0.6rem] uppercase tracking-[0.14em] text-teal-strong">{p.brand_name}</p>}
+          </div>
+        </div>
+        <h3 className={cn("font-sans font-medium leading-snug text-navy-deep", size === "lg" ? "text-base" : "text-[0.8rem] sm:text-[0.86rem]")}>
+          <Link href={href} prefetch={false} className="line-clamp-1 md:group-hover:line-clamp-2">{name}</Link>
+        </h3>
+        <div className="mt-0.5 flex items-center justify-between gap-2">
+          <Price price={p.price} compare={p.compare_at_price} locale={locale} size="sm" fromLabel={p.has_variants ? t.common.from : undefined} />
+          <span className="md:hidden"><CardActions product={p} variant="mobile" /></span>
+        </div>
+        <div className="hidden grid-rows-[0fr] transition-[grid-template-rows] duration-500 ease-[var(--ease-out-soft)] md:grid md:group-hover:grid-rows-[1fr] md:group-focus-within:grid-rows-[1fr]">
+          <div className="overflow-hidden">
+            <div className="flex gap-2 pt-2.5">
+              <CardActions product={p} variant="desktop" />
+              <CardActions product={p} variant="quickview" />
+            </div>
+          </div>
+        </div>
       </div>
     </article>
   );
@@ -99,7 +99,7 @@ export function ProductCard({
 export function ProductCardSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-hidden>
-      <div className="skeleton aspect-[3/4] rounded-[1.25rem]" />
+      <div className="skeleton aspect-[4/5] rounded-[1.25rem]" />
     </div>
   );
 }

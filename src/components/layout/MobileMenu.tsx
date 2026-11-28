@@ -31,7 +31,7 @@ export function MobileMenu({ t, years, specialties, categories }: {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="-ms-2 grid size-10 place-items-center rounded-full text-navy lg:hidden" aria-label={t.nav.menu} aria-expanded={open}>
+      <button type="button" onClick={() => setOpen(true)} className="hdr-cap -ms-2 grid size-11 place-items-center rounded-full text-navy lg:hidden" aria-label={t.nav.menu} aria-expanded={open}>
         <Menu className="size-6" />
       </button>
       {/* Portal: the header gets backdrop-blur when scrolled, which would trap this fixed overlay inside it */}

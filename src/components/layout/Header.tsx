@@ -54,7 +54,7 @@ export async function Header() {
             specialties={navSpecs}
             categories={navCats.map(({ slug, name }) => ({ slug, name }))}
           />
-          <Link href="/" className="flex shrink-0 items-center gap-2.5" aria-label="EDS — Al Esraa Dental Store, home">
+          <Link href="/" className="hdr-cap flex shrink-0 items-center gap-2.5 rounded-full" aria-label="EDS — Al Esraa Dental Store, home">
             <Image src="/brand/eds-mark.png" alt="" width={44} height={44} priority className="size-9 lg:size-10" />
             <span className="flex flex-col leading-none">
               <span className="display text-[1.35rem] tracking-[-0.04em]">EDS</span>

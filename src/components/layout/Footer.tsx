@@ -85,8 +85,10 @@ export async function Footer() {
 
       <p aria-hidden className="display pointer-events-none relative select-none whitespace-nowrap text-center text-[26vw] leading-[0.72] tracking-[-0.07em] text-white/[0.04]">EDS</p>
       <div className="relative border-t border-white/10">
-        <div className="container-x flex flex-col items-center justify-between gap-2 py-5 text-xs text-white/50 sm:flex-row">
+        {/* bottom-left, clear of the floating "Check my list" button (bottom-right) */}
+        <div className="container-x flex flex-col items-center gap-1.5 pb-24 pt-5 text-xs text-white/50 sm:flex-row sm:gap-3 sm:pb-6 sm:pe-56">
           <p>© {new Date().getFullYear()} Al Esraa Dental Store. {t.footer.rights}</p>
+          <span aria-hidden className="hidden text-white/20 sm:inline">·</span>
           <p dir="ltr">
             Made by{" "}
             <a href="https://www.instagram.com/websity.eg/" target="_blank" rel="noopener noreferrer" className="text-white/70 underline-offset-4 hover:text-teal hover:underline">

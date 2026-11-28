@@ -29,8 +29,9 @@ export function HeaderShell({ children }: { children: React.ReactNode }) {
       className={cn(
         "sticky top-0 z-50 transition-[transform,background-color,border-color,box-shadow] duration-500 ease-[var(--ease-out-soft)] will-change-transform",
         hidden && "-translate-y-full",
-        pathname === "/" && !scrolled && "hdr-over",
-        scrolled ? "border-b border-line/70 bg-white/[0.97] shadow-[0_10px_30px_-24px_rgb(2_42_82/0.4)]" : "border-b border-transparent bg-white/0",
+        // never a solid bar: over the home hero it is bare white ink; elsewhere the
+        // logo, nav and actions float as glass capsules over whatever is behind
+        pathname === "/" && !scrolled ? "hdr-over" : "hdr-float",
       )}
     >
       {children}

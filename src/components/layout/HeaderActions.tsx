@@ -29,7 +29,7 @@ export function HeaderActions() {
 
   const iconBtn = "relative grid size-10 place-items-center rounded-full text-navy transition-colors hover:bg-cloud";
   return (
-    <div className="ms-auto flex items-center gap-0.5 sm:gap-1">
+    <div className="hdr-cap ms-auto flex items-center gap-0.5 rounded-full sm:gap-1">
       <HeaderSearch className="hidden w-52 md:block lg:hidden xl:block xl:w-64" />
       <button type="button" onClick={() => setSearchOpen(true)} className={`${iconBtn} md:hidden lg:grid xl:hidden`} aria-label={t.nav.search} aria-expanded={searchOpen}>
         <Search className="size-5" />
