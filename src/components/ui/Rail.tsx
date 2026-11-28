@@ -36,8 +36,8 @@ export function Rail({ children, itemClass, label, className }: { children: Reac
       <div
         ref={ref}
         className={cn(
-          "scroll-rail -mx-4 gap-4 px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:gap-6 lg:px-0",
-          itemClass ?? "auto-cols-[68%] sm:auto-cols-[40%] md:auto-cols-[30%] lg:auto-cols-[calc((100%-4.5rem)/4)]",
+          "scroll-rail -mx-4 gap-3 px-4 pb-2 sm:-mx-6 sm:px-6 lg:mx-0 lg:gap-4 lg:px-0",
+          itemClass ?? "auto-cols-[46%] sm:auto-cols-[31%] md:auto-cols-[23%] lg:auto-cols-[calc((100%-4rem)/5)]",
         )}
       >
         {children}

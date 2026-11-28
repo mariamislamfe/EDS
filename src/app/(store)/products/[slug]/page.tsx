@@ -62,7 +62,7 @@ export default async function ProductPage({ params }: Props) {
       {product.brand_name && (
         <Link href={`/brands/${product.brand_slug}`} className="w-fit text-sm font-medium text-teal-strong hover:underline">{product.brand_name}</Link>
       )}
-      <h1 className="text-[clamp(1.7rem,3.2vw,2.6rem)] font-semibold leading-[1.1] tracking-[-0.02em] rtl:leading-snug rtl:tracking-normal">{name}</h1>
+      <h1 className="text-[clamp(1.4rem,2.4vw,2rem)] font-semibold leading-[1.15] tracking-[-0.02em] rtl:leading-snug rtl:tracking-normal">{name}</h1>
       {short && <p className="leading-relaxed text-muted">{short}</p>}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
         {product.sku && <span>{t.common.sku}: <span className="text-ink" dir="ltr">{product.sku}</span></span>}

@@ -19,7 +19,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
   return (
     <div className="container-x pb-10 pt-8">
       <Breadcrumbs items={[{ label: t.nav.home, href: "/" }, { label: t.nav.shop }]} />
-      <h1 className="mb-10 mt-4 text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-none tracking-[-0.03em] rtl:leading-tight rtl:tracking-normal">
+      <h1 className="mb-10 mt-4 text-[clamp(1.6rem,3vw,2.4rem)] font-bold leading-none tracking-[-0.03em] rtl:leading-tight rtl:tracking-normal">
         {q ? fmt(t.search.resultsFor, { q }) : t.nav.shop}
       </h1>
       <Suspense key={JSON.stringify(sp)} fallback={<ListingSkeleton />}>

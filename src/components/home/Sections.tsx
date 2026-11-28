@@ -232,7 +232,7 @@ export function SaleBand({ products, t, locale }: { products: CatalogProduct[]; 
       <div aria-hidden className="mm-grid-dark absolute inset-0" />
       <h2 id="sale-title" className="sr-only">On sale</h2>
       <div className="relative marquee" style={{ ["--marquee-speed" as string]: "38s" }}>{word(false)}{word(true)}</div>
-      <div className="container-x relative mt-5 flex flex-wrap items-end justify-between gap-4">
+      <div className="container-x relative mt-5 flex flex-wrap items-end justify-between gap-4 lg:pe-[8.5rem]">
         <p className="max-w-md text-lg text-white/70">
           {best > 0 ? <>Up to <span className="font-semibold text-teal">{best}% off</span> — while stock lasts.</> : "Limited-time prices — while stock lasts."}
         </p>

@@ -30,7 +30,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     <div className="container-x pb-10 pt-8">
       <Breadcrumbs items={[{ label: t.nav.home, href: "/" }, { label: t.nav.shop, href: "/shop" }, { label: title }]} />
       <header className="mb-10 mt-4 max-w-3xl">
-        <h1 className="text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-none tracking-[-0.03em] rtl:leading-tight rtl:tracking-normal">{title}</h1>
+        <h1 className="text-[clamp(1.6rem,3vw,2.4rem)] font-bold leading-none tracking-[-0.03em] rtl:leading-tight rtl:tracking-normal">{title}</h1>
         {desc && <p className="mt-4 text-lg text-muted">{desc}</p>}
       </header>
       <Suspense key={JSON.stringify(sp)} fallback={<ListingSkeleton />}>

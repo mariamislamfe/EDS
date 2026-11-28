@@ -26,7 +26,7 @@ export function Discovery({ tabs }: { tabs: DiscoveryTab[] }) {
 
   if (!list.length) return null;
   const tab = list.find((x) => x.id === active) ?? list[0];
-  const items = tab.products.slice(0, 4); // one row on desktop, 2×2 on phones
+  const items = tab.products.slice(0, 5); // one row on desktop, 2×2 on phones (5th hidden)
 
   return (
     <section className="container-x py-10 sm:py-14" aria-labelledby="disc-title">
@@ -51,7 +51,7 @@ export function Discovery({ tabs }: { tabs: DiscoveryTab[] }) {
         </div>
       </div>
 
-      <ul key={tab.id} ref={grid} className="tab-swap grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-4 md:grid-cols-4 lg:gap-x-6" role="tabpanel">
+      <ul key={tab.id} ref={grid} className="tab-swap grid grid-cols-2 gap-3 md:grid-cols-5 lg:gap-4 max-md:[&>li:nth-child(5)]:hidden" role="tabpanel">
         {items.map((p) => (
           <li key={p.id}><ProductCard product={p} locale="en" t={t} /></li>
         ))}

@@ -27,81 +27,70 @@ export function ProductCard({
   const href = `/products/${encodeURIComponent(p.slug)}`;
 
   return (
-    <article className={cn("group relative flex flex-col", className)}>
-      <div className={cn("product-tile relative overflow-hidden rounded-[var(--radius-card)]", size === "lg" ? "aspect-[4/5] lg:aspect-auto lg:flex-1" : "aspect-[4/5]", dark && "!bg-white")}>
-        <Link href={href} className="absolute inset-0" aria-label={name} prefetch={false}>
-          {p.image_url ? (
-            <>
-              <Image
-                src={p.image_url}
-                alt={name}
-                fill
-                priority={priority}
-                sizes="(min-width:1280px) 22vw, (min-width:768px) 30vw, 48vw"
-                className={cn(
-                  "cutout object-contain p-[10%] transition-[transform,opacity] duration-700 ease-[var(--ease-out-soft)] group-hover:scale-[1.06]",
-                  p.image_url_2 && "md:group-hover:opacity-0",
-                )}
-              />
-              {p.image_url_2 && (
-                <Image
-                  src={p.image_url_2}
-                  alt=""
-                  aria-hidden
-                  fill
-                  loading="lazy"
-                  sizes="(min-width:1280px) 22vw, (min-width:768px) 30vw, 48vw"
-                  className="cutout hidden object-contain p-[10%] opacity-0 transition-opacity duration-700 md:block md:group-hover:opacity-100"
-                />
-              )}
-            </>
-          ) : (
-            <div className="grid h-full place-items-center">
-              <Image src="/brand/eds-mark.png" alt="" width={56} height={56} className="opacity-25 grayscale" />
-            </div>
-          )}
-        </Link>
+    <article className={cn(
+      "group relative isolate flex flex-col overflow-hidden rounded-[1.25rem] p-3 transition-shadow duration-300 hover:shadow-[0_18px_40px_-22px_rgb(2_42_82/0.45)] sm:p-3.5",
+      size === "lg" ? "aspect-[3/4] lg:aspect-auto lg:h-full" : "aspect-[3/4]",
+      dark ? "bg-white" : "product-tile",
+      className,
+    )}>
+      {/* the whole tile opens the product */}
+      <Link href={href} prefetch={false} className="absolute inset-0 -z-10" aria-label={name} tabIndex={-1} />
 
-        <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <div className="flex flex-col items-start gap-1.5">
-            {pct > 0 && (
-              <span className="rounded-full bg-navy px-2.5 py-1 text-xs font-medium tabular-nums text-white">
-                −{pct}%
-              </span>
-            )}
-            {!p.in_stock && (
-              <span className="rounded-full bg-white/95 px-2.5 py-1 text-xs font-medium text-muted ring-1 ring-line">
-                {t.common.outOfStock}
-              </span>
-            )}
+      {/* details on top */}
+      <div className="pointer-events-none">
+        <div className="min-w-0">
+          {p.brand_name && <p className="truncate font-mono text-[0.6rem] uppercase tracking-[0.14em] text-teal-strong">{p.brand_name}</p>}
+          <h3 className={cn("mt-0.5 font-sans font-medium leading-snug tracking-[-0.01em] text-navy-deep", size === "lg" ? "text-lg" : "text-[0.8rem] sm:text-[0.88rem]")}>
+            <Link href={href} prefetch={false} className="pointer-events-auto line-clamp-2 hover:underline hover:underline-offset-2">{name}</Link>
+          </h3>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <Price price={p.price} compare={p.compare_at_price} locale={locale} size="sm" fromLabel={p.has_variants ? t.common.from : undefined} />
+            {pct > 0 && <span className="rounded-full bg-navy px-1.5 py-0.5 text-[0.65rem] font-semibold tabular-nums text-white">−{pct}%</span>}
           </div>
-          <div className="pointer-events-auto">
-            <WishlistButton productId={p.id} />
-          </div>
-        </div>
-
-        {/* desktop hover actions */}
-        <div className="absolute inset-x-3 bottom-3 hidden translate-y-3 gap-2 opacity-0 transition-all duration-300 ease-[var(--ease-out-soft)] group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:translate-y-0 group-focus-within:opacity-100 md:flex">
-          <CardActions product={p} variant="desktop" />
-          <CardActions product={p} variant="quickview" />
         </div>
       </div>
 
-      <div className={cn("flex flex-col gap-1 pt-4", size === "lg" ? "" : "flex-1")}>
-        {p.brand_name && <p className={cn("font-mono text-[0.65rem] uppercase tracking-[0.14em]", dark ? "text-teal" : "text-teal-strong")}>{p.brand_name}</p>}
-        <h3 className={cn("font-sans font-medium leading-snug tracking-[-0.01em]", size === "lg" ? "text-xl" : "text-[0.95rem]", dark ? "text-white" : "text-navy-deep")}>
-          <Link href={href} prefetch={false} className={cn("line-clamp-2 bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat transition-[background-size] duration-500 hover:bg-[length:100%_1px]")}>
-            {name}
-          </Link>
-        </h3>
-        <div className="mt-auto flex items-end justify-between gap-2 pt-1.5">
-          <span className={dark ? "[&_*]:!text-white/90" : ""}>
-            <Price price={p.price} compare={p.compare_at_price} locale={locale} size="sm" fromLabel={p.has_variants ? t.common.from : undefined} />
-          </span>
-          <div className="md:hidden">
-            <CardActions product={p} variant="mobile" />
+      {/* product shot */}
+      <div className="pointer-events-none relative mt-1 min-h-0 flex-1">
+        {p.image_url ? (
+          <>
+            <Image
+              src={p.image_url}
+              alt=""
+              fill
+              priority={priority}
+              sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
+              className={cn(
+                "cutout scale-[1.08] object-contain transition-[transform,opacity] duration-700 ease-[var(--ease-out-soft)] group-hover:scale-[1.14]",
+                p.image_url_2 && "md:group-hover:opacity-0",
+              )}
+            />
+            {p.image_url_2 && (
+              <Image src={p.image_url_2} alt="" aria-hidden fill loading="lazy"
+                sizes="(min-width:1280px) 18vw, (min-width:768px) 26vw, 46vw"
+                className="cutout hidden scale-[1.08] object-contain opacity-0 transition-opacity duration-700 md:block md:group-hover:opacity-100" />
+            )}
+          </>
+        ) : (
+          <div className="grid h-full place-items-center">
+            <Image src="/brand/eds-mark.png" alt="" width={48} height={48} className="opacity-25 grayscale" />
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* actions */}
+      <div className="flex items-end justify-between gap-1.5">
+        <span className="pointer-events-auto"><WishlistButton productId={p.id} /></span>
+        {!p.in_stock ? (
+          <span className="me-auto rounded-full bg-white/95 px-2.5 py-1 text-[0.7rem] font-medium text-muted ring-1 ring-line">{t.common.outOfStock}</span>
+        ) : (
+          <span className="hidden opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-within:opacity-100 md:block">
+            <CardActions product={p} variant="quickview" />
+          </span>
+        )}
+        <span className="ms-auto">
+          <CardActions product={p} variant="mobile" />
+        </span>
       </div>
     </article>
   );
@@ -110,10 +99,7 @@ export function ProductCard({
 export function ProductCardSkeleton() {
   return (
     <div className="flex flex-col gap-3" aria-hidden>
-      <div className="skeleton aspect-[4/5] rounded-[var(--radius-card)]" />
-      <div className="skeleton h-3 w-1/3" />
-      <div className="skeleton h-4 w-4/5" />
-      <div className="skeleton h-4 w-1/4" />
+      <div className="skeleton aspect-[3/4] rounded-[1.25rem]" />
     </div>
   );
 }

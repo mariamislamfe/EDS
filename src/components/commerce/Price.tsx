@@ -20,7 +20,7 @@ export function Price({
           "font-display font-semibold tabular-nums text-navy",
           size === "sm" && "text-[0.95rem]",
           size === "md" && "text-lg",
-          size === "lg" && "text-3xl tracking-tight",
+          size === "lg" && "text-2xl tracking-tight",
         )}
       >
         {formatPrice(price, locale)}

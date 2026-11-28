@@ -25,7 +25,7 @@ export default async function BrandPage({ params, searchParams }: Props) {
   return (
     <div className="container-x pb-10 pt-8">
       <Breadcrumbs items={[{ label: t.nav.home, href: "/" }, { label: t.nav.brands }, { label: brand.name }]} />
-      <h1 className="mb-10 mt-4 text-[clamp(2rem,4.5vw,3.4rem)] font-bold leading-none tracking-[-0.03em]">{brand.name}</h1>
+      <h1 className="mb-10 mt-4 text-[clamp(1.6rem,3vw,2.4rem)] font-bold leading-none tracking-[-0.03em]">{brand.name}</h1>
       <Suspense key={JSON.stringify(sp)} fallback={<ListingSkeleton />}>
         <Listing basePath={`/brands/${brand.slug}`} searchParams={sp} fixed={{ brand: brand.slug }} t={t} locale={locale} />
       </Suspense>

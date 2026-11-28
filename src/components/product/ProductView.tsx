@@ -39,10 +39,10 @@ export function ProductView({ product, header }: { product: ProductDetail; heade
   }, [images, show]);
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+    <div className="grid gap-6 md:grid-cols-[minmax(0,26rem)_1fr] md:gap-10 lg:grid-cols-[minmax(0,30rem)_1fr] lg:gap-14">
       {/* gallery */}
       <div className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-        <div className="product-tile relative overflow-hidden rounded-[1.75rem]">
+        <div className="product-tile relative mx-auto w-full max-w-[26rem] overflow-hidden rounded-[1.5rem] md:max-w-none">
           <div
             ref={railRef}
             className="scroll-rail aspect-square auto-cols-[100%]"
@@ -54,7 +54,7 @@ export function ProductView({ product, header }: { product: ProductDetail; heade
           >
             {images.length ? images.map((src, i) => (
               <div key={src} className="relative aspect-square">
-                <Image src={src} alt={i === 0 ? name : ""} fill priority={i === 0} sizes="(min-width:1024px) 50vw, 100vw" className="object-contain p-[8%]" />
+                <Image src={src} alt={i === 0 ? name : ""} fill priority={i === 0} sizes="(min-width:1024px) 480px, (min-width:768px) 416px, 100vw" className="object-contain p-[8%]" />
               </div>
             )) : (
               <div className="grid aspect-square place-items-center">
@@ -75,7 +75,7 @@ export function ProductView({ product, header }: { product: ProductDetail; heade
             {images.map((src, i) => (
               <li key={src}>
                 <button type="button" onClick={() => show(i)} aria-label={`${i + 1} / ${images.length}`} aria-current={i === active}
-                  className={cn("product-tile relative size-20 overflow-hidden rounded-xl ring-2 transition", i === active ? "ring-navy" : "ring-transparent hover:ring-line")}>
+                  className={cn("product-tile relative size-16 overflow-hidden rounded-xl ring-2 transition", i === active ? "ring-navy" : "ring-transparent hover:ring-line")}>
                   <Image src={src} alt="" fill sizes="80px" className="object-contain p-2" />
                 </button>
               </li>
@@ -85,7 +85,7 @@ export function ProductView({ product, header }: { product: ProductDetail; heade
       </div>
 
       {/* purchase panel */}
-      <div ref={panelRef} className="flex flex-col gap-7 lg:sticky lg:top-24 lg:self-start">
+      <div ref={panelRef} className="flex flex-col gap-5 lg:sticky lg:top-24 lg:self-start">
         {header}
         <ProductPurchase product={product} onImageChange={onVariantImage} />
       </div>

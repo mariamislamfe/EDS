@@ -15,7 +15,7 @@ export function SectionHead({
   return (
     <div className={cn("mb-8 flex flex-wrap items-end justify-between gap-x-8 gap-y-3", className)}>
       <div className="max-w-2xl">
-        <Tag className="text-[clamp(1.6rem,3vw,2.4rem)] font-semibold leading-[1.08] tracking-[-0.02em]">{title}</Tag>
+        <Tag className="text-[clamp(1.3rem,2.2vw,1.8rem)] font-semibold leading-[1.1] tracking-[-0.02em]">{title}</Tag>
         {text && <p className="mt-2.5 text-muted">{text}</p>}
       </div>
       {href && linkLabel && (

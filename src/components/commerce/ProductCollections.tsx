@@ -9,7 +9,7 @@ export function ProductGrid({ products, locale, t, className, priorityCount = 2 
   products: CatalogProduct[]; locale: Locale; t: Dictionary; className?: string; priorityCount?: number;
 }) {
   return (
-    <ul className={cn("grid grid-cols-2 gap-x-4 gap-y-10 md:grid-cols-3 lg:gap-x-6 xl:grid-cols-4", className)}>
+    <ul className={cn("grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4 xl:grid-cols-5", className)}>
       {products.map((p, i) => (
         <li key={p.id} data-reveal style={{ ["--reveal-delay" as string]: `${(i % 4) * 60}ms` }}>
           <ProductCard product={p} locale={locale} t={t} priority={i < priorityCount} />
